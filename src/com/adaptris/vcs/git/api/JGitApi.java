@@ -49,6 +49,7 @@ public class JGitApi implements VersionControlSystemApi {
 
   @Override
   public String update(File workingCopyUrl, String tagName) throws VcsException {
+    this.update(workingCopyUrl); // get all branches and tags first
     try {
       CheckoutCommand checkoutCommand = this.getLocalRepository(workingCopyUrl).checkout().setName(tagName);
       checkoutCommand.call();
@@ -57,11 +58,13 @@ public class JGitApi implements VersionControlSystemApi {
     }
     return this.currentLocalRevision(workingCopyUrl);
   }
+  
 
   @Override
   public String update(File workingCopyUrl) throws VcsException {
     try {
-      PullCommand pullCommand = this.getLocalRepository(workingCopyUrl).pull();
+      Git localRepository = this.getLocalRepository(workingCopyUrl);
+      PullCommand pullCommand = localRepository.pull();
       this.configureAuthentication(pullCommand);
       pullCommand.call();
     } catch (GitAPIException e) {
@@ -108,9 +111,10 @@ public class JGitApi implements VersionControlSystemApi {
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
     Repository repository;
     try {
-      repository = builder.setGitDir(localRepoDir)
+      repository = builder
+        .setWorkTree(localRepoDir)
         .readEnvironment()
-        .findGitDir()
+        .setup()
         .build();
     } catch (IOException e) {
       throw new VcsException(e);
@@ -123,11 +127,23 @@ public class JGitApi implements VersionControlSystemApi {
     Git localRepository = this.getLocalRepository(workingCopyUrl);
     ObjectId resolvedRevision;
     try {
-      resolvedRevision = localRepository.getRepository().resolve(localRepository.getRepository().getFullBranch());
+      String fullBranch = localRepository.getRepository().getFullBranch();
+      resolvedRevision = localRepository.getRepository().resolve(fullBranch);
     } catch (RevisionSyntaxException | IOException e) {
       throw new VcsException(e);
     }
     return resolvedRevision.getName();
+  }
+  
+  private boolean areWeMaster(Git localRepository) throws VcsException {
+    String fullBranch;
+    try {
+      fullBranch = localRepository.getRepository().getFullBranch();
+    } catch (IOException e) {
+      throw new VcsException(e);
+    }
+    
+    return fullBranch.endsWith("master") ? true : false;
   }
 
   public AuthenticationProvider getAuthenticationProvider() {
