@@ -2,6 +2,7 @@ package com.adaptris.vcs.git.api;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
@@ -15,6 +16,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
+import com.adaptris.core.management.vcs.RevisionHistoryItem;
 import com.adaptris.core.management.vcs.VcsException;
 import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.auth.AuthenticationProvider;
@@ -95,6 +97,30 @@ public class JGitApi implements VersionControlSystem {
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
+  }
+  
+  @Override
+  public String getImplementationName() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public String getLocalRevision(File arg0) throws VcsException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public String getRemoteRevision(String arg0) throws VcsException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public List<RevisionHistoryItem> getRemoteRevisionHistory(String arg0, int arg1) throws VcsException {
+    // TODO Auto-generated method stub
+    return null;
   }
   
   @SuppressWarnings("rawtypes")
