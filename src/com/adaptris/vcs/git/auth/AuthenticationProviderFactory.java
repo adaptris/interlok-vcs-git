@@ -1,13 +1,12 @@
 package com.adaptris.vcs.git.auth;
 
-import java.net.MalformedURLException;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.adaptris.core.fs.FsHelper;
 import com.adaptris.core.management.vcs.VcsConstants;
 import com.adaptris.core.management.vcs.VcsException;
-import com.adaptris.vcs.git.utils.FileUtils;
 
 public class AuthenticationProviderFactory {
   
@@ -28,9 +27,9 @@ public class AuthenticationProviderFactory {
         try {
           AuthenticationProvider authenticationProvider = new SSHAuthenticationProvider(
               properties.getProperty(VcsConstants.VCS_SSH_PASSPHRASE_KEY),
-              FileUtils.toFile(properties.getProperty(VcsConstants.VCS_SSH_KEYFILE_URL_KEY)));
+              FsHelper.createFileReference(FsHelper.createUrlFromString(properties.getProperty(VcsConstants.VCS_SSH_KEYFILE_URL_KEY), true)));
           return authenticationProvider; 
-        } catch (MalformedURLException ex) {
+        } catch (Exception ex) {
           throw new VcsException(ex);
         }
       }
@@ -55,4 +54,5 @@ public class AuthenticationProviderFactory {
     return authenticationProvider;
   }
 
+  
 }
