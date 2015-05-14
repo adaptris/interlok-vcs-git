@@ -12,12 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import com.adaptris.core.fs.FsHelper;
 import com.adaptris.core.management.BootstrapProperties;
+import com.adaptris.core.management.vcs.RuntimeVersionControl;
 import com.adaptris.core.management.vcs.VcsException;
 import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.api.JGitApi;
-import com.adaptris.vcs.git.api.VersionControlSystemApi;
 
-public class GitVCS implements VersionControlSystem {
+public class GitVCS implements RuntimeVersionControl {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
   
@@ -25,7 +25,7 @@ public class GitVCS implements VersionControlSystem {
   
   private BootstrapProperties bootstrapProperties;
   
-  private transient VersionControlSystemApi api;
+  private transient VersionControlSystem api;
 
   @Override
   public String getImplementationName() {
@@ -96,18 +96,18 @@ public class GitVCS implements VersionControlSystem {
     return this.bootstrapProperties;
   }
 
-  protected VersionControlSystemApi api() {
+  protected VersionControlSystem api() {
     if(this.getApi() == null)
       this.setApi(new JGitApi());
     
     return this.getApi();
   }
   
-  public VersionControlSystemApi getApi() {
+  public VersionControlSystem getApi() {
     return api;
   }
 
-  public void setApi(VersionControlSystemApi api) {
+  public void setApi(VersionControlSystem api) {
     this.api = api;
   }
 

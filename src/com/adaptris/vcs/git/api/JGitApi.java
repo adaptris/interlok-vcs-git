@@ -16,9 +16,10 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 
 import com.adaptris.core.management.vcs.VcsException;
+import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.auth.AuthenticationProvider;
 
-public class JGitApi implements VersionControlSystemApi {
+public class JGitApi implements VersionControlSystem {
   
   private AuthenticationProvider authenticationProvider;
   
