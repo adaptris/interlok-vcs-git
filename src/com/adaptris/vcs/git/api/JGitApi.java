@@ -23,6 +23,8 @@ import com.adaptris.vcs.git.auth.AuthenticationProvider;
 
 public class JGitApi implements VersionControlSystem {
   
+  private static final String IMPL_NAME = "Git";
+  
   private AuthenticationProvider authenticationProvider;
   
   public JGitApi() {
@@ -101,24 +103,23 @@ public class JGitApi implements VersionControlSystem {
   
   @Override
   public String getImplementationName() {
-    // TODO Auto-generated method stub
+    return IMPL_NAME;
+  }
+
+  @Override
+  public String getLocalRevision(File workingCopyUrl) throws VcsException {
+    return this.getLocalRevision(workingCopyUrl);
+  }
+
+  @Override
+  public String getRemoteRevision(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
+    Git localRepository = this.getLocalRepository(workingCopyUrl);
+    
     return null;
   }
 
   @Override
-  public String getLocalRevision(File arg0) throws VcsException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public String getRemoteRevision(String arg0) throws VcsException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public List<RevisionHistoryItem> getRemoteRevisionHistory(String arg0, int arg1) throws VcsException {
+  public List<RevisionHistoryItem> getRemoteRevisionHistory(String remoteRepoUrl, File workingCopyUrl, int limit) throws VcsException {
     // TODO Auto-generated method stub
     return null;
   }
