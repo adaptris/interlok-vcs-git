@@ -6,6 +6,7 @@ import static com.adaptris.core.management.vcs.VcsConstants.VCS_REVISION_KEY;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 import java.io.File;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,8 @@ import com.adaptris.core.management.vcs.RuntimeVersionControl;
 import com.adaptris.core.management.vcs.VcsException;
 import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.api.JGitApi;
+import com.adaptris.vcs.git.auth.AuthenticationProvider;
+import com.adaptris.vcs.git.auth.AuthenticationProviderFactory;
 
 public class GitVCS implements RuntimeVersionControl {
   
@@ -86,6 +89,16 @@ public class GitVCS implements RuntimeVersionControl {
       throw new VcsException(e);
     }
   }
+  
+  @Override
+  public VersionControlSystem getApi(Properties properties) throws VcsException {
+    AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
+    AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
+    if(authenticationProvider != null)
+      return new JGitApi(authenticationProvider);
+    else
+      return new JGitApi();
+  }
 
   @Override
   public void setBootstrapProperties(BootstrapProperties bootstrapProperties) {
@@ -96,11 +109,8 @@ public class GitVCS implements RuntimeVersionControl {
     return this.bootstrapProperties;
   }
 
-  protected VersionControlSystem api() {
-    if(this.getApi() == null)
-      this.setApi(new JGitApi());
-    
-    return this.getApi();
+  protected VersionControlSystem api() throws VcsException {
+    return this.getApi(getBootstrapProperties());
   }
   
   public VersionControlSystem getApi() {
