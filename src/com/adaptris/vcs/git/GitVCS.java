@@ -20,6 +20,23 @@ import com.adaptris.vcs.git.api.JGitApi;
 import com.adaptris.vcs.git.auth.AuthenticationProvider;
 import com.adaptris.vcs.git.auth.AuthenticationProviderFactory;
 
+/**
+ * <p>
+ * {@link RuntimeVersionControl} implementation specifically built for GIT.
+ * </p>
+ * 
+ * <p>
+ * This implementation will allow allow cloning and updating of a local repository.  Interlok by itself does not 
+ * manage repository files, but simply checks them out so that we can start an instance with configuration files that may be checked in.
+ * </p>
+ * 
+ * <p>
+ * By dropping this jar file into the classpath of Interlok you will have activated source control cloning via GIT.<br/>
+ * However if you do not configure the bootstrap.properties correctly we will skip attempting to clone/update your local repository.
+ * </p>
+ * @author amcgrath
+ *
+ */
 public class GitVCS implements RuntimeVersionControl {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
@@ -39,7 +56,7 @@ public class GitVCS implements RuntimeVersionControl {
   public void update() throws VcsException {
     String localRepoUrl = this.getBootstrapProperties().getProperty(VCS_LOCAL_URL_KEY);
     if(localRepoUrl == null)
-      log.info("Subversion: " + VCS_LOCAL_URL_KEY + " not configured skipping repository update.");
+      log.info("GIT: " + VCS_LOCAL_URL_KEY + " not configured skipping repository update.");
     else {
       File localRepo = null;
       localRepo = this.urlToFile(localRepoUrl);
