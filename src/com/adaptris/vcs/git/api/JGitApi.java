@@ -67,7 +67,7 @@ public class JGitApi implements VersionControlSystem {
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
-    return null;
+    return currentLocalRevision(workingCopyUrl);
   }
 
   @Override
@@ -187,7 +187,6 @@ public class JGitApi implements VersionControlSystem {
     try {
       repository = builder
           .setWorkTree(localRepoDir)
-          .readEnvironment()
           .setup()
           .build();
     } catch (IOException e) {
