@@ -41,11 +41,18 @@ public class GitVCS implements RuntimeVersionControl {
   
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
   
-  private static final String VCS_NAME = "GIT";
+  private static final String VCS_NAME = "Git";
   
   private BootstrapProperties bootstrapProperties;
   
   private transient VersionControlSystem api;
+  
+  public GitVCS() {
+  }
+  
+  public GitVCS(BootstrapProperties bootstrapProperties) {
+    this.setBootstrapProperties(bootstrapProperties);
+  }
 
   @Override
   public String getImplementationName() {
@@ -109,12 +116,20 @@ public class GitVCS implements RuntimeVersionControl {
   
   @Override
   public VersionControlSystem getApi(Properties properties) throws VcsException {
-    AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
-    AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
-    if(authenticationProvider != null)
-      return new JGitApi(authenticationProvider);
-    else
-      return new JGitApi();
+    if(this.getApi() == null) {
+      AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
+      AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
+      
+      VersionControlSystem api = null;
+      if(authenticationProvider != null)
+        api = new JGitApi(authenticationProvider);
+      else
+        api = new JGitApi();
+      
+      this.setApi(api);
+      return api;
+    } else
+      return this.getApi();
   }
 
   @Override
