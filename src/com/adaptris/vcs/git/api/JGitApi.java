@@ -3,11 +3,13 @@ package com.adaptris.vcs.git.api;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.TransportCommand;
@@ -15,6 +17,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -30,6 +33,8 @@ public class JGitApi implements VersionControlSystem {
 
   private static final String COPY_CLONE_POSTFIX = "_copy_doNotEdit";
 
+  private static final String ALL_FILE_PATTERN = ".";
+
   private AuthenticationProvider authenticationProvider;
 
   public JGitApi() {
@@ -42,15 +47,20 @@ public class JGitApi implements VersionControlSystem {
   @Override
   public String testConnection(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
     try {
-      CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(workingCopyUrl);
-      configureAuthentication(cloneCommand);
-      cloneCommand.setNoCheckout(true);
-      cloneCommand.call();
+      String revision = null;
+      LsRemoteCommand lsRemoteCommand = Git.lsRemoteRepository().setHeads(false).setTags(false).setRemote(remoteRepoUrl);
+      configureAuthentication(lsRemoteCommand);
+      Collection<Ref> refs = lsRemoteCommand.call();
+      for (Ref ref : refs) {
+        if (Constants.HEAD.equals(ref.getName())) {
+          revision = ref.getObjectId().getName();
+          break;
+        }
+      }
+      return revision;
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
-    // Maybe we should be able to return some sort of revision number
-    return null;
   }
 
   @Override
@@ -124,7 +134,7 @@ public class JGitApi implements VersionControlSystem {
   @Override
   public void recursiveAdd(File workingCopyUrl) throws VcsException {
     try {
-      getLocalRepository(workingCopyUrl).add().call();
+      getLocalRepository(workingCopyUrl).add().addFilepattern(ALL_FILE_PATTERN).call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
