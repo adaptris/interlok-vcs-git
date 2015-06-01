@@ -8,11 +8,15 @@ import java.util.List;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RevisionSyntaxException;
 import org.eclipse.jgit.lib.Constants;
@@ -21,6 +25,11 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.adaptris.core.management.vcs.RevisionHistoryItem;
 import com.adaptris.core.management.vcs.VcsException;
@@ -28,6 +37,8 @@ import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.auth.AuthenticationProvider;
 
 public class JGitApi implements VersionControlSystem {
+
+  protected transient Logger log = LoggerFactory.getLogger(this.getClass());
 
   private static final String IMPL_NAME = "Git";
 
@@ -77,7 +88,7 @@ public class JGitApi implements VersionControlSystem {
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
-    return currentLocalRevision(workingCopyUrl);
+    return getLocalRevision(workingCopyUrl);
   }
 
   @Override
@@ -95,9 +106,8 @@ public class JGitApi implements VersionControlSystem {
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
-    return currentLocalRevision(workingCopyUrl);
+    return getLocalRevision(workingCopyUrl);
   }
-
 
   @Override
   public String update(File workingCopyUrl) throws VcsException {
@@ -110,25 +120,44 @@ public class JGitApi implements VersionControlSystem {
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
-    return currentLocalRevision(workingCopyUrl);
+    return getLocalRevision(workingCopyUrl);
   }
 
   @Override
   public void commit(File workingCopyUrl, String commitMessage) throws VcsException {
     try {
-      Git localRepository = getLocalRepository(workingCopyUrl);
-      localRepository.commit().setAll(true).setMessage(commitMessage).call();
+      // We update the copy so it reflects the remote repository
+      // Committing to the copy will return the same result as committing to the remote repository
+      updateCopy(workingCopyUrl);
 
-      // This will push to our copy of the clone.
-      PushCommand pushCommand = localRepository.push();
-      configureAuthentication(pushCommand);
-      pushCommand.call();
+      Git localRepository = getLocalRepository(workingCopyUrl);
+      RevCommit revCommit = localRepository.commit().setAll(true).setMessage(commitMessage).call();
+      push(localRepository, revCommit);
 
       // Now push to the actual GIT server from our copy of the clone.
       pushCopy(workingCopyUrl);
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
+  }
+
+  private void push(Git localRepository, RevCommit revCommit) throws GitAPIException, CheckoutConflictException, VcsException {
+    try {
+      // This will push to our copy of the clone.
+      pushCommand(localRepository);
+    } catch (VcsException vcse) {
+      resetCommit(localRepository, revCommit);
+      throw vcse;
+    }
+  }
+
+  private void resetCommit(Git localRepository, RevCommit revCommit) throws GitAPIException, CheckoutConflictException {
+    String resetRevision = Constants.HEAD;
+    if (revCommit.getParentCount() > 0) {
+      resetRevision = revCommit.getParent(0).getName();
+    }
+    ResetCommand resetCommand = localRepository.reset();
+    resetCommand.setMode(ResetType.MIXED).setRef(resetRevision).call();
   }
 
   @Override
@@ -147,13 +176,13 @@ public class JGitApi implements VersionControlSystem {
 
   @Override
   public String getLocalRevision(File workingCopyUrl) throws VcsException {
-    return currentLocalRevision(workingCopyUrl);
+    return currentLocalRevision(getLocalRepository(workingCopyUrl));
   }
 
   @Override
   public String getRemoteRevision(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
     updateCopy(workingCopyUrl);
-    return currentLocalRevision(getLocalCloneCopy(workingCopyUrl));
+    return currentLocalRevision(getBareRepository(getLocalCloneCopy(workingCopyUrl)));
   }
 
   @Override
@@ -161,10 +190,10 @@ public class JGitApi implements VersionControlSystem {
     List<RevisionHistoryItem> returnedsRevisions = new ArrayList<>();
     updateCopy(workingCopyUrl); // get all commits etc into our copy, then querty that, without modifying the actual working copy.
 
-    Git localRepositoryCopy = getLocalRepository(getLocalCloneCopy(workingCopyUrl));
+    Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
     try {
-      ObjectId head = localRepositoryCopy.getRepository().resolve(Constants.HEAD);
-      Iterable<RevCommit> commits = localRepositoryCopy.log().add(head).setMaxCount(limit).call();
+      ObjectId head = bareRepository.getRepository().resolve(Constants.HEAD);
+      Iterable<RevCommit> commits = bareRepository.log().add(head).setMaxCount(limit).call();
 
       for(RevCommit commit : commits) {
         RevisionHistoryItem item = new RevisionHistoryItem();
@@ -192,13 +221,24 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private Git getLocalRepository(File localRepoDir) throws VcsException {
+    return getRepository(localRepoDir, false);
+  }
+
+  private Git getBareRepository(File localRepoDir) throws VcsException {
+    return getRepository(localRepoDir, true);
+  }
+
+  private Git getRepository(File localRepoDir, boolean bare) throws VcsException {
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
     Repository repository;
     try {
-      repository = builder
-          .setWorkTree(localRepoDir)
-          .setup()
-          .build();
+      if (bare) {
+        builder.setBare();
+        builder.setGitDir(localRepoDir);
+      } else {
+        builder.setWorkTree(localRepoDir);
+      }
+      repository = builder.setup().build();
     } catch (IOException e) {
       throw new VcsException(e);
     }
@@ -206,12 +246,11 @@ public class JGitApi implements VersionControlSystem {
     return new Git(repository);
   }
 
-  private String currentLocalRevision(File workingCopyUrl) throws VcsException {
-    Git localRepository = getLocalRepository(workingCopyUrl);
+  private String currentLocalRevision(Git repository) throws VcsException {
     ObjectId resolvedRevision;
     try {
-      String fullBranch = localRepository.getRepository().getFullBranch();
-      resolvedRevision = localRepository.getRepository().resolve(fullBranch);
+      String fullBranch = repository.getRepository().getFullBranch();
+      resolvedRevision = repository.getRepository().resolve(fullBranch);
     } catch (RevisionSyntaxException | IOException e) {
       throw new VcsException(e);
     }
@@ -229,7 +268,7 @@ public class JGitApi implements VersionControlSystem {
    */
   private void checkoutCopy(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
     try {
-      CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(getLocalCloneCopy(workingCopyUrl));
+      CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(getLocalCloneCopy(workingCopyUrl)).setBare(true);
       configureAuthentication(cloneCommand);
       cloneCommand.call();
     } catch (GitAPIException e) {
@@ -239,10 +278,11 @@ public class JGitApi implements VersionControlSystem {
 
   private void updateCopy(File workingCopyUrl) throws VcsException {
     try {
-      Git localRepository = getLocalRepository(getLocalCloneCopy(workingCopyUrl));
-      PullCommand pullCommand = localRepository.pull();
-      configureAuthentication(pullCommand);
-      pullCommand.call();
+      Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
+      // The copy repo is a bare repo so we can only do fetch and not pull
+      FetchCommand fetchCommand = bareRepository.fetch();
+      configureAuthentication(fetchCommand);
+      fetchCommand.call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
     }
@@ -258,14 +298,38 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private void pushCopy(File workingCopyUrl) throws VcsException {
-    Git localRepositoryCopy = getLocalRepository(getLocalCloneCopy(workingCopyUrl));
-    // This will push our copy of the clone to the GIT server.
-    PushCommand pushCommand = localRepositoryCopy.push();
+    // This will push our copy of the clone to the GIT server
+    Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
+    pushCommand(bareRepository);
+  }
+
+  private void pushCommand(Git repository) throws VcsException {
+    PushCommand pushCommand = repository.push();
     configureAuthentication(pushCommand);
     try {
-      pushCommand.call();
+      Iterable<PushResult> pushResults = pushCommand.call();
+      processPushResults(pushResults);
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    }
+  }
+
+  private void processPushResults(Iterable<PushResult> results) throws VcsException {
+    for (PushResult pushResult : results) {
+      processPushResult(pushResult);
+    }
+  }
+
+  private void processPushResult(PushResult pushResult) throws VcsException {
+    Collection<RemoteRefUpdate> remoteUpdates = pushResult.getRemoteUpdates();
+    for (RemoteRefUpdate remoteRefUpdate : remoteUpdates) {
+      Status status = remoteRefUpdate.getStatus();
+      // If at least one result is not OK or UP_TO_DATE we throw an exception
+      if (!status.equals(RemoteRefUpdate.Status.OK) && !status.equals(RemoteRefUpdate.Status.UP_TO_DATE)) {
+        String message = "The push failed with status [" + status + "] and message [" + remoteRefUpdate.getMessage() + "]";
+        log.debug(message);
+        throw new VcsException(message);
+      }
     }
   }
 
