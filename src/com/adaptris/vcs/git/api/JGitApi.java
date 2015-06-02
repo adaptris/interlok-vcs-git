@@ -112,25 +112,27 @@ public class JGitApi implements VersionControlSystem {
   @Override
   public String update(File workingCopyUrl) throws VcsException {
     updateCopy(workingCopyUrl); // get all branches and tags first in our copy
+    Git localRepository = getLocalRepository(workingCopyUrl);
     try {
-      Git localRepository = getLocalRepository(workingCopyUrl);
       PullCommand pullCommand = localRepository.pull();
       configureAuthentication(pullCommand);
       pullCommand.call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    } finally {
+      localRepository.close();
     }
     return getLocalRevision(workingCopyUrl);
   }
 
   @Override
   public void commit(File workingCopyUrl, String commitMessage) throws VcsException {
+    updateCopy(workingCopyUrl);
+    Git localRepository = getLocalRepository(workingCopyUrl);
     try {
       // We update the copy so it reflects the remote repository
       // Committing to the copy will return the same result as committing to the remote repository
-      updateCopy(workingCopyUrl);
 
-      Git localRepository = getLocalRepository(workingCopyUrl);
       RevCommit revCommit = localRepository.commit().setAll(true).setMessage(commitMessage).call();
       push(localRepository, revCommit);
 
@@ -138,6 +140,8 @@ public class JGitApi implements VersionControlSystem {
       pushCopy(workingCopyUrl);
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    } finally {
+      localRepository.close();
     }
   }
 
@@ -203,6 +207,8 @@ public class JGitApi implements VersionControlSystem {
       }
     } catch (IOException | GitAPIException ex) {
       throw new VcsException(ex);
+    } finally {
+      bareRepository.close();
     }
     return returnedsRevisions;
   }
@@ -277,14 +283,16 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private void updateCopy(File workingCopyUrl) throws VcsException {
+    Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
     try {
-      Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
       // The copy repo is a bare repo so we can only do fetch and not pull
       FetchCommand fetchCommand = bareRepository.fetch();
       configureAuthentication(fetchCommand);
       fetchCommand.call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    } finally {
+      bareRepository.close();
     }
   }
 
@@ -300,7 +308,11 @@ public class JGitApi implements VersionControlSystem {
   private void pushCopy(File workingCopyUrl) throws VcsException {
     // This will push our copy of the clone to the GIT server
     Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
-    pushCommand(bareRepository);
+    try {
+      pushCommand(bareRepository);
+    } finally {
+       bareRepository.close();
+    }
   }
 
   private void pushCommand(Git repository) throws VcsException {
