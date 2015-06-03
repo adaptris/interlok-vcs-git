@@ -80,13 +80,18 @@ public class JGitApi implements VersionControlSystem {
     // This copy will always be up to date, regardless of the tag the user may have chosen.
     checkoutCopy(remoteRepoUrl, workingCopyUrl);
 
+    Git localRepository = null;
     try {
       CloneCommand cloneCommand = Git.cloneRepository().setURI(getLocalCloneCopy(workingCopyUrl).getAbsolutePath())
           .setDirectory(workingCopyUrl);
       configureAuthentication(cloneCommand);
-      cloneCommand.call();
+      localRepository = cloneCommand.call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    } finally {
+      if (localRepository != null) {
+        localRepository.close();
+      }
     }
     return getLocalRevision(workingCopyUrl);
   }
@@ -273,12 +278,17 @@ public class JGitApi implements VersionControlSystem {
    * @throws VcsException
    */
   private void checkoutCopy(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
+    Git bareRepository = null;
     try {
       CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(getLocalCloneCopy(workingCopyUrl)).setBare(true);
       configureAuthentication(cloneCommand);
-      cloneCommand.call();
+      bareRepository = cloneCommand.call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
+    } finally {
+      if (bareRepository != null) {
+        bareRepository.close();
+      }
     }
   }
 
@@ -311,7 +321,7 @@ public class JGitApi implements VersionControlSystem {
     try {
       pushCommand(bareRepository);
     } finally {
-       bareRepository.close();
+      bareRepository.close();
     }
   }
 
