@@ -355,11 +355,11 @@ public class JGitApi implements VersionControlSystem {
     }
   }
 
-  public AuthenticationProvider getAuthenticationProvider() {
+  AuthenticationProvider getAuthenticationProvider() {
     return authenticationProvider;
   }
 
-  public void setAuthenticationProvider(
+  void setAuthenticationProvider(
       AuthenticationProvider authenticationProvider) {
     this.authenticationProvider = authenticationProvider;
   }

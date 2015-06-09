@@ -26,16 +26,21 @@ import com.adaptris.vcs.git.auth.AuthenticationProviderFactory;
  * </p>
  * 
  * <p>
- * This implementation will allow allow cloning and updating of a local repository.  Interlok by itself does not 
- * manage repository files, but simply checks them out so that we can start an instance with configuration files that may be checked in.
+ * This implementation will allow allow cloning and updating of a local repository. Interlok by
+ * itself does not manage repository files, but simply checks them out so that we can start an
+ * instance with configuration files that may be checked in.
  * </p>
  * 
  * <p>
- * By dropping this jar file into the classpath of Interlok you will have activated source control cloning via GIT.<br/>
- * However if you do not configure the bootstrap.properties correctly we will skip attempting to clone/update your local repository.
+ * By dropping this jar file into the classpath of Interlok you will have activated source control
+ * cloning via GIT.<br/>
+ * However if you do not configure the bootstrap.properties correctly we will skip attempting to
+ * clone/update your local repository.
  * </p>
+ * 
  * @author amcgrath
- *
+ * @since 3.0.3
+ * 
  */
 public class GitVCS implements RuntimeVersionControl {
   
@@ -145,11 +150,11 @@ public class GitVCS implements RuntimeVersionControl {
     return this.getApi(getBootstrapProperties());
   }
   
-  public VersionControlSystem getApi() {
+  VersionControlSystem getApi() {
     return api;
   }
 
-  public void setApi(VersionControlSystem api) {
+  void setApi(VersionControlSystem api) {
     this.api = api;
   }
 
