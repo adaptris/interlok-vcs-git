@@ -132,17 +132,41 @@ public class JGitApi implements VersionControlSystem {
 
   @Override
   public void commit(File workingCopyUrl, String commitMessage) throws VcsException {
+    // We update the copy so it reflects the remote repository
+    // Committing to the copy will return the same result as committing to the remote repository
     updateCopy(workingCopyUrl);
     Git localRepository = getLocalRepository(workingCopyUrl);
     try {
-      // We update the copy so it reflects the remote repository
-      // Committing to the copy will return the same result as committing to the remote repository
-
       RevCommit revCommit = localRepository.commit().setAll(true).setMessage(commitMessage).call();
       push(localRepository, revCommit);
 
       // Now push to the actual GIT server from our copy of the clone.
       pushCopy(workingCopyUrl);
+    } catch (GitAPIException e) {
+      throw new VcsException(e);
+    } finally {
+      localRepository.close();
+    }
+  }
+
+  @Override
+  public void addAndCommit(File workingCopyUrl, String commitMessage, String... fileNames) throws VcsException {
+    // We update the copy so it reflects the remote repository
+    // Committing to the copy will return the same result as committing to the remote repository
+    updateCopy(workingCopyUrl);
+    Git localRepository = getLocalRepository(workingCopyUrl);
+    try {
+      if (fileNames.length > 0) {
+        for (String fileName : fileNames) {
+          localRepository.add().addFilepattern(fileName).call();
+        }
+
+        RevCommit revCommit = localRepository.commit().setMessage(commitMessage).call();
+        push(localRepository, revCommit);
+
+        // Now push to the actual GIT server from our copy of the clone.
+        pushCopy(workingCopyUrl);
+      }
     } catch (GitAPIException e) {
       throw new VcsException(e);
     } finally {

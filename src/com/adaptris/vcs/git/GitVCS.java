@@ -121,20 +121,17 @@ public class GitVCS implements RuntimeVersionControl {
   
   @Override
   public VersionControlSystem getApi(Properties properties) throws VcsException {
-    if(this.getApi() == null) {
-      AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
-      AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
+    AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
+    AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
       
-      VersionControlSystem api = null;
-      if(authenticationProvider != null)
-        api = new JGitApi(authenticationProvider);
-      else
-        api = new JGitApi();
+    VersionControlSystem api = null;
+    if(authenticationProvider != null) {
+      api = new JGitApi(authenticationProvider);
+    } else {
+      api = new JGitApi();
+    }
       
-      this.setApi(api);
-      return api;
-    } else
-      return this.getApi();
+    return api;
   }
 
   @Override
@@ -147,7 +144,10 @@ public class GitVCS implements RuntimeVersionControl {
   }
 
   protected VersionControlSystem api() throws VcsException {
-    return this.getApi(getBootstrapProperties());
+    if (this.getApi() == null) {
+      this.setApi(this.getApi(getBootstrapProperties()));
+    }
+    return this.getApi();
   }
   
   VersionControlSystem getApi() {
