@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adaptris.core.management.vcs.RevisionHistoryItem;
+import com.adaptris.core.management.vcs.VcsConflictException;
 import com.adaptris.core.management.vcs.VcsException;
 import com.adaptris.core.management.vcs.VersionControlSystem;
 import com.adaptris.vcs.git.auth.AuthenticationProvider;
@@ -122,8 +123,10 @@ public class JGitApi implements VersionControlSystem {
       PullCommand pullCommand = localRepository.pull();
       configureAuthentication(pullCommand);
       pullCommand.call();
-    } catch (GitAPIException e) {
-      throw new VcsException(e);
+    } catch (CheckoutConflictException cce) {
+      throw new VcsConflictException(cce);
+    } catch (GitAPIException gae) {
+      throw new VcsException(gae);
     } finally {
       localRepository.close();
     }
@@ -142,6 +145,8 @@ public class JGitApi implements VersionControlSystem {
 
       // Now push to the actual GIT server from our copy of the clone.
       pushCopy(workingCopyUrl);
+    } catch (CheckoutConflictException cce) {
+      throw new VcsConflictException(cce);
     } catch (GitAPIException e) {
       throw new VcsException(e);
     } finally {
@@ -167,6 +172,8 @@ public class JGitApi implements VersionControlSystem {
         // Now push to the actual GIT server from our copy of the clone.
         pushCopy(workingCopyUrl);
       }
+    } catch (CheckoutConflictException cce) {
+      throw new VcsConflictException(cce);
     } catch (GitAPIException e) {
       throw new VcsException(e);
     } finally {
@@ -374,7 +381,7 @@ public class JGitApi implements VersionControlSystem {
       if (!status.equals(RemoteRefUpdate.Status.OK) && !status.equals(RemoteRefUpdate.Status.UP_TO_DATE)) {
         String message = "The push failed with status [" + status + "] and message [" + remoteRefUpdate.getMessage() + "]";
         log.debug(message);
-        throw new VcsException(message);
+        throw new VcsConflictException(message);
       }
     }
   }
