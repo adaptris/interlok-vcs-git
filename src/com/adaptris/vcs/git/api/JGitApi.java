@@ -139,6 +139,8 @@ public class JGitApi implements VersionControlSystem {
         gitPull(localRepository, tagName).call();
         gitCheckout(localRepository, tagName).call();
       } else {
+        // If it's not a remote branch, then just pull the changes for the current branch.
+        gitPull(localRepository).call();
         gitCheckout(localRepository, tagName).call();
       }
       rev = currentLocalRevision(localRepository);
