@@ -13,7 +13,6 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.LsRemoteCommand;
-import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -111,6 +110,9 @@ public class JGitApi implements VersionControlSystem {
     String rev = null;
     try {
       localRepository = gitClone(cachedClone.getAbsolutePath(), workingCopyUrl, null);
+      if (isRemoteBranch(localRepository, revision)) {
+        createBranchIfMissing(localRepository, revision);
+      }
       gitCheckoutCommand(localRepository, revision).call();
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException|IOException e) {
@@ -127,11 +129,9 @@ public class JGitApi implements VersionControlSystem {
     Git localRepository = getLocalRepository(workingCopyUrl);
     String rev = null;
     try {
+      gitFetch(localRepository).call();
       if (isRemoteBranch(localRepository, tagName)) {
         createBranchIfMissing(localRepository, tagName);
-        gitPull(localRepository, tagName).call();
-      } else {
-        gitPull(localRepository).call();
       }
       gitCheckoutCommand(localRepository, tagName).call();
       rev = currentLocalRevision(localRepository);
@@ -149,7 +149,7 @@ public class JGitApi implements VersionControlSystem {
     String rev = null;
     Git localRepository = getLocalRepository(workingCopyUrl);
     try {
-      gitPull(localRepository).call();
+      gitFetch(localRepository).call();
       gitCheckoutCommand(localRepository, null).call();
       rev = currentLocalRevision(localRepository);
     } catch (CheckoutConflictException cce) {
@@ -210,14 +210,13 @@ public class JGitApi implements VersionControlSystem {
     }
   }
 
-
   private boolean isRemoteBranch(Git localRepository, String tagOrBranch) throws GitAPIException {
     String remoteBranchMatch = String.format(REMOTE_ORIGIN_REF, tagOrBranch);
     boolean result = false;
     List<Ref> branches = localRepository.branchList().setListMode(ListMode.ALL).call();
     for (Ref ref : branches) {
       if (remoteBranchMatch.equalsIgnoreCase(ref.getName())) {
-        log.trace("GIT: Matched Remote Branch [{}] against [{}]", ref.getName(), tagOrBranch);
+        log.trace("GIT: Matched Tag/Branch [{}] against [{}]; assuming branch checkout", tagOrBranch, ref.getName());
         result = true;
       }
     }
@@ -249,18 +248,10 @@ public class JGitApi implements VersionControlSystem {
   }
 
 
-  private PullCommand gitPull(Git localRepository) throws GitAPIException, IOException {
-    return gitPull(localRepository, localRepository.getRepository().getBranch());
-  }
-  
-  private PullCommand gitPull(Git localRepository, String branchName) throws GitAPIException, IOException {
-    PullCommand pullCommand = localRepository.pull();
-    if (branchName != null) {
-      pullCommand.setRemoteBranchName(branchName);
-    }
-    log.trace("GIT: Pulling changes from origin for branch [{}]", branchName);
-    configureAuthentication(pullCommand);
-    return pullCommand;
+  private FetchCommand gitFetch(Git localRepository) throws GitAPIException {
+    FetchCommand fetcher = localRepository.fetch();
+    configureAuthentication(fetcher);
+    return fetcher;
   }
 
   private CheckoutCommand gitCheckoutCommand(Git repo, String branchOrTag) throws IOException {
@@ -435,10 +426,7 @@ public class JGitApi implements VersionControlSystem {
   private void updateCopy(File workingCopyUrl) throws VcsException {
     Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
     try {
-      // The copy repo is a bare repo so we can only do fetch and not pull
-      FetchCommand fetchCommand = bareRepository.fetch();
-      configureAuthentication(fetchCommand);
-      fetchCommand.call();
+      gitFetch(bareRepository).call();
     } catch (GitAPIException e) {
       throw new VcsException(e);
     } finally {
