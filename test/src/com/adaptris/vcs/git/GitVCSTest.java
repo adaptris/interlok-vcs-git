@@ -9,8 +9,6 @@ import static org.mockito.Mockito.verify;
 import java.io.File;
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -18,6 +16,8 @@ import com.adaptris.core.management.vcs.VcsConstants;
 import com.adaptris.core.management.vcs.VcsException;
 import com.adaptris.core.stubs.JunitBootstrapProperties;
 import com.adaptris.vcs.git.api.JGitApi;
+
+import junit.framework.TestCase;
 
 public class GitVCSTest extends TestCase {
   
@@ -65,24 +65,6 @@ public class GitVCSTest extends TestCase {
     verify(mockApi, never()).checkout(anyString(), any(File.class), any(String.class));
   }
   
-  public void testUpdateLocalRepoUrlMalformed() throws Exception {
-    bootstrapProperties.put(VcsConstants.VCS_LOCAL_URL_KEY, "xxx:\\//:xxx");
-    vcs.setBootstrapProperties(new JunitBootstrapProperties(bootstrapProperties));
-    vcs.setApi(mockApi);
-    
-    try {
-      vcs.update();
-      fail("Should fail with malformed URl");
-    } catch (VcsException ex) {
-      // expected.
-    }
-    
-    // nothing should happen.
-    verify(mockApi, never()).update(any(File.class));
-    verify(mockApi, never()).update(any(File.class), any(String.class));
-    verify(mockApi, never()).checkout(anyString(), any(File.class));
-    verify(mockApi, never()).checkout(anyString(), any(File.class), any(String.class));
-  }
   
   //temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
   
@@ -111,8 +93,6 @@ public class GitVCSTest extends TestCase {
     
     vcs.update();
     // nothing should happen.
-    verify(mockApi, times(0)).update(any(File.class));
-    verify(mockApi, times(0)).update(any(File.class), any(String.class));
     verify(mockApi, times(1)).checkout(anyString(), any(File.class));
     verify(mockApi, times(0)).checkout(anyString(), any(File.class), any(String.class));
   }
@@ -129,8 +109,6 @@ public class GitVCSTest extends TestCase {
     
     vcs.update();
     // nothing should happen.
-    verify(mockApi, never()).update(any(File.class));
-    verify(mockApi, never()).update(any(File.class), any(String.class));
     verify(mockApi, never()).checkout(anyString(), any(File.class));
     verify(mockApi, times(1)).checkout(anyString(), any(File.class), any(String.class));
   }

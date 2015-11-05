@@ -68,7 +68,7 @@ public class GitVCS implements RuntimeVersionControl {
   @Override
   public void update() throws VcsException {
     GitConfig config = new GitConfig();
-    if (!config.canUpdate()) {
+    if (!config.isConfigured()) {
       log.info("GIT: [{}] not configured skipping repository update.", VCS_LOCAL_URL_KEY);
       return;
     }
@@ -88,13 +88,13 @@ public class GitVCS implements RuntimeVersionControl {
   }
   
   private void gitCheckout(GitConfig config) throws VcsException {
-    if (!config.canCheckout()) {
+    if (!config.isConfigured()) {
       log.info("GIT: [{}] or [{}] not configured, skipping checkout.", VCS_LOCAL_URL_KEY, VCS_REMOTE_REPO_URL_KEY);
       return;
     }
     log.info("GIT: Performing checkout to [{}] ", fullpath(config.getLocalRepo()));
     String checkoutRevision = null;
-    if (config.hasRevision()) {
+    if (!config.hasRevision()) {
       checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo());
     } else {
       checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo(), config.getRevision());
@@ -103,7 +103,7 @@ public class GitVCS implements RuntimeVersionControl {
   }
 
   private void gitUpdate(GitConfig config) throws VcsException {
-    if (!config.canUpdate()) {
+    if (!config.isConfigured()) {
       log.info("GIT: [{}] not configured skipping repository update.", VCS_LOCAL_URL_KEY);
       return;
     }
@@ -185,11 +185,7 @@ public class GitVCS implements RuntimeVersionControl {
       revision = getBootstrapProperties().getProperty(VCS_REVISION_KEY);
     }
 
-    boolean canUpdate() {
-      return localRepo != null;
-    }
-
-    boolean canCheckout() {
+    boolean isConfigured() {
       return localRepo != null && remoteRepo != null;
     }
 
