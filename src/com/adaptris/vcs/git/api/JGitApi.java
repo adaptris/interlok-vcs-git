@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
@@ -113,7 +114,7 @@ public class JGitApi implements VersionControlSystem {
       if (isRemoteBranch(localRepository, revision)) {
         createBranchIfMissing(localRepository, revision);
       }
-      gitCheckoutCommand(localRepository, revision).call();
+      gitCheckout(localRepository, revision).call();
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException|IOException e) {
       throw new VcsException(e);
@@ -132,8 +133,14 @@ public class JGitApi implements VersionControlSystem {
       gitFetch(localRepository).call();
       if (isRemoteBranch(localRepository, tagName)) {
         createBranchIfMissing(localRepository, tagName);
+        // Do a checkout to the branch; so that when you pull you don't pull into the current branch.
+        gitCheckout(localRepository, tagName, false).call();
+        // Now pull any changes, and then checkout again.
+        gitPull(localRepository, tagName).call();
+        gitCheckout(localRepository, tagName).call();
+      } else {
+        gitCheckout(localRepository, tagName).call();
       }
-      gitCheckoutCommand(localRepository, tagName).call();
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException | IOException e) {
       throw new VcsException(e);
@@ -150,7 +157,8 @@ public class JGitApi implements VersionControlSystem {
     Git localRepository = getLocalRepository(workingCopyUrl);
     try {
       gitFetch(localRepository).call();
-      gitCheckoutCommand(localRepository, null).call();
+      gitPull(localRepository).call();
+      gitCheckout(localRepository, null).call();
       rev = currentLocalRevision(localRepository);
     } catch (CheckoutConflictException cce) {
       throw new VcsConflictException(cce);
@@ -254,14 +262,33 @@ public class JGitApi implements VersionControlSystem {
     return fetcher;
   }
 
-  private CheckoutCommand gitCheckoutCommand(Git repo, String branchOrTag) throws IOException {
-    CheckoutCommand cmd = repo.checkout();
-    String ref = branchOrTag != null ? branchOrTag :repo.getRepository().getBranch();
-    log.trace("GIT: Check out to revision/tag/branch [{}]", ref);          
-    cmd.setName(ref);
-    return cmd;
+  private PullCommand gitPull(Git localRepository) throws GitAPIException, IOException {
+    return gitPull(localRepository, localRepository.getRepository().getBranch());
   }
 
+  private PullCommand gitPull(Git localRepository, String branchName) throws GitAPIException, IOException {
+    PullCommand pullCommand = localRepository.pull();
+    if (branchName != null) {
+      pullCommand.setRemoteBranchName(branchName);
+    }
+    log.trace("GIT: Pulling changes for branch [{}]", branchName);
+    configureAuthentication(pullCommand);
+    return pullCommand;
+  }
+
+  private CheckoutCommand gitCheckout(Git repo, String branchOrTag) throws IOException {
+    return gitCheckout(repo, branchOrTag, true);
+  }
+
+  private CheckoutCommand gitCheckout(Git repo, String branchOrTag, boolean logging) throws IOException {
+    CheckoutCommand cmd = repo.checkout();
+    String ref = branchOrTag != null ? branchOrTag : repo.getRepository().getBranch();
+    if (logging)
+      log.trace("GIT: Check out to revision/tag/branch [{}]", ref);
+    cmd.setName(ref);
+    return cmd;
+
+  }
   private void push(Git localRepository, RevCommit revCommit) throws GitAPIException, CheckoutConflictException, VcsException {
     try {
       // This will push to our copy of the clone.
