@@ -5,13 +5,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
@@ -50,19 +50,13 @@ public class JGitApi implements VersionControlSystem {
   private static final String LOCAL_COPY_FORMAT = ".%1s_cacheCopy_doNotEdit";
 
   private static final String ALL_FILE_PATTERN = ".";
-
-  // Try and support the 2 styles of URL
-  // git@bitbucket.org:adaptris/hgca-interlok?initial.branch=staging
-  // https://lewinc@bitbucket.org/adaptris/hgca-interlok.git?initial.branch=staging
-  private static final String INITIAL_BRANCH_REGEXP = "^(.*)\\?initial.branch=(.*)$";
-  private static final int URI_GROUP = 1;
-  private static final int BRANCH_GROUP = 2;
+  private static final String REMOTE_ORIGIN_REF = "refs/remotes/origin/%1s";
+  private static final String REMOTE_ORIGIN_BRANCH = "origin/%1s";
+  private static final String LOCAL_HEAD_BRANCH = "refs/heads/%1s";
 
   private AuthenticationProvider authenticationProvider;
-  private transient Pattern branchPattern;
 
   public JGitApi() {
-    branchPattern = Pattern.compile(INITIAL_BRANCH_REGEXP);
   }
 
   public JGitApi(AuthenticationProvider authenticationProvider) {
@@ -73,7 +67,7 @@ public class JGitApi implements VersionControlSystem {
   public String testConnection(final String remoteRepoUrl, final File workingCopyUrl) throws VcsException {
     try {
       String revision = null;
-      String actualUrl = actualUrl(remoteRepoUrl);
+      String actualUrl = remoteRepoUrl;
       LsRemoteCommand lsRemoteCommand = Git.lsRemoteRepository().setHeads(false).setTags(false).setRemote(actualUrl);
       configureAuthentication(lsRemoteCommand);
       Collection<Ref> refs = lsRemoteCommand.call();
@@ -91,12 +85,11 @@ public class JGitApi implements VersionControlSystem {
 
   @Override
   public String checkout(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
-    String actualUrl = actualUrl(remoteRepoUrl);
-    String initialBranch = initialBranch(remoteRepoUrl);
-    log.trace("GIT: Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
+    String initialBranch = null;
+    log.trace("GIT: Check out [{}]", remoteRepoUrl);
     // Now make a copy for our querying purposes. We will also use this to update from.
     // This copy will always be up to date, regardless of the tag the user may have chosen.
-    File cachedClone = checkoutCopy(actualUrl, workingCopyUrl);
+    File cachedClone = checkoutCopy(remoteRepoUrl, workingCopyUrl);
     Git localRepository = null;
     String rev = null;
     try {
@@ -112,14 +105,12 @@ public class JGitApi implements VersionControlSystem {
 
   @Override
   public String checkout(String remoteRepoUrl, File workingCopyUrl, String revision) throws VcsException {
-    String actualUrl = actualUrl(remoteRepoUrl);
-    String initialBranch = initialBranch(remoteRepoUrl);
-    log.trace("GIT: Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
-    File cachedClone = checkoutCopy(actualUrl, workingCopyUrl);
+    log.trace("GIT: Check out [{}]", remoteRepoUrl);
+    File cachedClone = checkoutCopy(remoteRepoUrl, workingCopyUrl);
     Git localRepository = null;
     String rev = null;
     try {
-      localRepository = gitClone(cachedClone.getAbsolutePath(), workingCopyUrl, initialBranch);
+      localRepository = gitClone(cachedClone.getAbsolutePath(), workingCopyUrl, null);
       gitCheckoutCommand(localRepository, revision).call();
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException|IOException e) {
@@ -136,7 +127,12 @@ public class JGitApi implements VersionControlSystem {
     Git localRepository = getLocalRepository(workingCopyUrl);
     String rev = null;
     try {
-      gitPull(localRepository).call();
+      if (isRemoteBranch(localRepository, tagName)) {
+        createBranchIfMissing(localRepository, tagName);
+        gitPull(localRepository, tagName).call();
+      } else {
+        gitPull(localRepository).call();
+      }
       gitCheckoutCommand(localRepository, tagName).call();
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException | IOException e) {
@@ -214,6 +210,34 @@ public class JGitApi implements VersionControlSystem {
     }
   }
 
+
+  private boolean isRemoteBranch(Git localRepository, String tagOrBranch) throws GitAPIException {
+    String remoteBranchMatch = String.format(REMOTE_ORIGIN_REF, tagOrBranch);
+    boolean result = false;
+    List<Ref> branches = localRepository.branchList().setListMode(ListMode.ALL).call();
+    for (Ref ref : branches) {
+      if (remoteBranchMatch.equalsIgnoreCase(ref.getName())) {
+        log.trace("GIT: Matched Remote Branch [{}] against [{}]", ref.getName(), tagOrBranch);
+        result = true;
+      }
+    }
+    return result;
+  }
+
+
+  private void createBranchIfMissing(Git localRepository, String branchName) throws IOException, GitAPIException {
+    String localRef = String.format(LOCAL_HEAD_BRANCH, branchName);
+    String remoteRef = String.format(REMOTE_ORIGIN_BRANCH, branchName);
+    if (localRepository.getRepository().getRef(localRef) != null) {
+      log.debug("GIT: Matched [{}] against existing head [{}]", branchName, localRef);
+      // the ref already exists, we don't need to do anything.
+    } else {
+      log.debug("GIT: Creating new tracked branch [{}] against [{}]", branchName, remoteRef);
+      localRepository.branchCreate().setName(branchName).setStartPoint(remoteRef).setUpstreamMode(SetupUpstreamMode.TRACK).call();
+    }
+  }
+
+
   private Git gitClone(String remoteRepo, File localRepo, String initialBranch)
       throws InvalidRemoteException, TransportException, GitAPIException {
     CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepo).setDirectory(localRepo);
@@ -226,16 +250,19 @@ public class JGitApi implements VersionControlSystem {
 
 
   private PullCommand gitPull(Git localRepository) throws GitAPIException, IOException {
-    String branch = localRepository.getRepository().getBranch();
+    return gitPull(localRepository, localRepository.getRepository().getBranch());
+  }
+  
+  private PullCommand gitPull(Git localRepository, String branchName) throws GitAPIException, IOException {
     PullCommand pullCommand = localRepository.pull();
-    if (branch != null) {
-      pullCommand.setRemoteBranchName(branch);
+    if (branchName != null) {
+      pullCommand.setRemoteBranchName(branchName);
     }
-    log.trace("GIT: Pulling changes from origin for branch [{}]", branch);
+    log.trace("GIT: Pulling changes from origin for branch [{}]", branchName);
     configureAuthentication(pullCommand);
     return pullCommand;
   }
-  
+
   private CheckoutCommand gitCheckoutCommand(Git repo, String branchOrTag) throws IOException {
     CheckoutCommand cmd = repo.checkout();
     String ref = branchOrTag != null ? branchOrTag :repo.getRepository().getBranch();
@@ -477,24 +504,6 @@ public class JGitApi implements VersionControlSystem {
   private void close(Git repo) {
     if (repo != null)
       repo.close();
-  }
-
-  private String initialBranch(String remoteRepoUrl) {
-    String result = null;
-    Matcher m = branchPattern.matcher(remoteRepoUrl);
-    if (m.matches()) {
-      result = m.group(BRANCH_GROUP);
-    }
-    return result;
-  }
-
-  private String actualUrl(String remoteRepoUrl) {
-    String result = null;
-    Matcher m = branchPattern.matcher(remoteRepoUrl);
-    if (m.matches()) {
-      result = m.group(URI_GROUP);
-    }
-    return result;
   }
   
   private String fullpath(File file) {

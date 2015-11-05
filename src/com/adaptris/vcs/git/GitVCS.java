@@ -67,50 +67,55 @@ public class GitVCS implements RuntimeVersionControl {
 
   @Override
   public void update() throws VcsException {
-    String localRepoUrl = this.getBootstrapProperties().getProperty(VCS_LOCAL_URL_KEY);
-    if(localRepoUrl == null) {
+    GitConfig config = new GitConfig();
+    if (!config.canUpdate()) {
       log.info("GIT: [{}] not configured skipping repository update.", VCS_LOCAL_URL_KEY);
-    } else {
-      File localRepo = this.urlToFile(localRepoUrl);
-      log.info("GIT: Checking local repository [{}] ", fullpath(localRepo));
-      
-      if(!localRepo.exists()) {
-        log.info("GIT: [{}] does not exist, performing fresh checkout.", this.urlToFile(localRepoUrl).getAbsolutePath());
-        this.checkout();
-        return ;
-      }      
-      String revisionValue = this.getBootstrapProperties().getProperty(VCS_REVISION_KEY);
-      String checkoutRevision = null;
-      if(isEmpty(revisionValue)) {
-        checkoutRevision = this.api().update(localRepo);
-      } else {
-        checkoutRevision = this.api().update(localRepo, revisionValue);
-      }
-      log.info("GIT: Updated configuration to revision: {}", checkoutRevision);
+      return;
     }
+    log.info("GIT: Checking local repository [{}] ", fullpath(config.getLocalRepo()));
+    if (!config.getLocalRepo().exists()) {
+      log.info("GIT: [{}] does not exist, performing fresh checkout.", fullpath(config.getLocalRepo()));
+      gitCheckout(config);
+    }
+    gitUpdate(config);
   }
 
   @Override
   public void checkout() throws VcsException {
-    String workingCopyUrl = this.getBootstrapProperties().getProperty(VCS_LOCAL_URL_KEY);
-    String remoteRepoUrl = this.getBootstrapProperties().getProperty(VCS_REMOTE_REPO_URL_KEY);
-    if((workingCopyUrl == null) || (remoteRepoUrl == null)) {
-      log.info("GIT: [{}] or [{}] not configured, skipping checkout.", VCS_LOCAL_URL_KEY, VCS_REMOTE_REPO_URL_KEY);
-    } else {
-      File localRepoFile = this.urlToFile(workingCopyUrl);
-      log.info("GIT: Performing checkout to [{}] ", fullpath(localRepoFile)); 
-
-      String revisionValue = this.getBootstrapProperties().getProperty(VCS_REVISION_KEY);
-      String checkoutRevision = null;
-      if(isEmpty(revisionValue)) {
-        checkoutRevision = this.api().checkout(remoteRepoUrl,localRepoFile);
-      } else {
-        checkoutRevision = this.api().checkout(remoteRepoUrl, localRepoFile, revisionValue);     
-      }
-      log.info("GIT: Checked out configuration to revision: {}", checkoutRevision);
-    }
+    GitConfig config = new GitConfig();
+    gitCheckout(config);
+    gitUpdate(config);
   }
   
+  private void gitCheckout(GitConfig config) throws VcsException {
+    if (!config.canCheckout()) {
+      log.info("GIT: [{}] or [{}] not configured, skipping checkout.", VCS_LOCAL_URL_KEY, VCS_REMOTE_REPO_URL_KEY);
+      return;
+    }
+    log.info("GIT: Performing checkout to [{}] ", fullpath(config.getLocalRepo()));
+    String checkoutRevision = null;
+    if (config.hasRevision()) {
+      checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo());
+    } else {
+      checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo(), config.getRevision());
+    }
+    // log.info("GIT: Checked out configuration to revision: {}", checkoutRevision);
+  }
+
+  private void gitUpdate(GitConfig config) throws VcsException {
+    if (!config.canUpdate()) {
+      log.info("GIT: [{}] not configured skipping repository update.", VCS_LOCAL_URL_KEY);
+      return;
+    }
+    String checkoutRevision = null;
+    if (isEmpty(config.getRevision())) {
+      checkoutRevision = this.api().update(config.getLocalRepo());
+    } else {
+      checkoutRevision = this.api().update(config.getLocalRepo(), config.getRevision());
+    }
+    log.info("GIT: Updated configuration to revision: {}", checkoutRevision);
+  }
+
   private File urlToFile(String url) throws VcsException {
     try {
       return FsHelper.createFileReference(FsHelper.createUrlFromString(url, true));
@@ -169,4 +174,39 @@ public class GitVCS implements RuntimeVersionControl {
     this.api = api;
   }
 
+  private class GitConfig {
+    private String localRepo;
+    private String remoteRepo;
+    private String revision;
+
+    GitConfig() {
+      localRepo = getBootstrapProperties().getProperty(VCS_LOCAL_URL_KEY);
+      remoteRepo = getBootstrapProperties().getProperty(VCS_REMOTE_REPO_URL_KEY);
+      revision = getBootstrapProperties().getProperty(VCS_REVISION_KEY);
+    }
+
+    boolean canUpdate() {
+      return localRepo != null;
+    }
+
+    boolean canCheckout() {
+      return localRepo != null && remoteRepo != null;
+    }
+
+    boolean hasRevision() {
+      return revision != null;
+    }
+
+    File getLocalRepo() throws VcsException {
+      return urlToFile(localRepo);
+    }
+
+    String getRemoteRepo() {
+      return remoteRepo;
+    }
+
+    String getRevision() {
+      return revision;
+    }
+  }
 }
