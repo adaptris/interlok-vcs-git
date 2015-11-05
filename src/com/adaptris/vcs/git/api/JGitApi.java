@@ -47,7 +47,7 @@ public class JGitApi implements VersionControlSystem {
 
   private static final String IMPL_NAME = "Git";
 
-  private static final String COPY_CLONE_POSTFIX = "_copy_doNotEdit";
+  private static final String LOCAL_COPY_FORMAT = ".%1s_cacheCopy_doNotEdit";
 
   private static final String ALL_FILE_PATTERN = ".";
 
@@ -93,15 +93,14 @@ public class JGitApi implements VersionControlSystem {
   public String checkout(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
     String actualUrl = actualUrl(remoteRepoUrl);
     String initialBranch = initialBranch(remoteRepoUrl);
-    log.trace("GIT : Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
+    log.trace("GIT: Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
     // Now make a copy for our querying purposes. We will also use this to update from.
     // This copy will always be up to date, regardless of the tag the user may have chosen.
-    checkoutCopy(actualUrl, workingCopyUrl);
-
+    File cachedClone = checkoutCopy(actualUrl, workingCopyUrl);
     Git localRepository = null;
     String rev = null;
     try {
-      localRepository = gitClone(getLocalCloneCopy(workingCopyUrl).getAbsolutePath(), workingCopyUrl, null);
+      localRepository = gitClone(cachedClone.getAbsolutePath(), workingCopyUrl, initialBranch);
       rev = currentLocalRevision(localRepository);
     } catch (GitAPIException e) {
       throw new VcsException(e);
@@ -115,15 +114,15 @@ public class JGitApi implements VersionControlSystem {
   public String checkout(String remoteRepoUrl, File workingCopyUrl, String revision) throws VcsException {
     String actualUrl = actualUrl(remoteRepoUrl);
     String initialBranch = initialBranch(remoteRepoUrl);
-    log.trace("GIT : Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
-    checkoutCopy(actualUrl, workingCopyUrl);
+    log.trace("GIT: Check out [{}] with branch [{}]", actualUrl, initialBranch == null ? "master" : initialBranch);
+    File cachedClone = checkoutCopy(actualUrl, workingCopyUrl);
     Git localRepository = null;
     String rev = null;
     try {
-      localRepository = gitClone(getLocalCloneCopy(workingCopyUrl).getAbsolutePath(), workingCopyUrl, initialBranch);
-      gitCheckout(localRepository, revision);
+      localRepository = gitClone(cachedClone.getAbsolutePath(), workingCopyUrl, initialBranch);
+      gitCheckoutCommand(localRepository, revision).call();
       rev = currentLocalRevision(localRepository);
-    } catch (GitAPIException e) {
+    } catch (GitAPIException|IOException e) {
       throw new VcsException(e);
     } finally {
       close(localRepository);
@@ -137,10 +136,10 @@ public class JGitApi implements VersionControlSystem {
     Git localRepository = getLocalRepository(workingCopyUrl);
     String rev = null;
     try {
-      CheckoutCommand checkoutCommand = getLocalRepository(workingCopyUrl).checkout().setName(tagName);
-      checkoutCommand.call();
+      gitPull(localRepository).call();
+      gitCheckoutCommand(localRepository, tagName).call();
       rev = currentLocalRevision(localRepository);
-    } catch (GitAPIException e) {
+    } catch (GitAPIException | IOException e) {
       throw new VcsException(e);
     } finally {
       close(localRepository);
@@ -154,12 +153,13 @@ public class JGitApi implements VersionControlSystem {
     String rev = null;
     Git localRepository = getLocalRepository(workingCopyUrl);
     try {
-      gitPull(localRepository);
+      gitPull(localRepository).call();
+      gitCheckoutCommand(localRepository, null).call();
       rev = currentLocalRevision(localRepository);
     } catch (CheckoutConflictException cce) {
       throw new VcsConflictException(cce);
-    } catch (GitAPIException gae) {
-      throw new VcsException(gae);
+    } catch (GitAPIException | IOException e) {
+      throw new VcsException(e);
     } finally {
       close(localRepository);
     }
@@ -225,22 +225,22 @@ public class JGitApi implements VersionControlSystem {
   }
 
 
-  private void gitPull(Git localRepository) throws GitAPIException {
+  private PullCommand gitPull(Git localRepository) throws GitAPIException, IOException {
+    String branch = localRepository.getRepository().getBranch();
     PullCommand pullCommand = localRepository.pull();
-    configureAuthentication(pullCommand);
-    pullCommand.call();
-  }
-
-  private void gitCheckout(Git localRepository, String branchOrTag) throws GitAPIException {
-    CheckoutCommand checkoutCommand = gitCheckoutCommand(localRepository, branchOrTag);
-    checkoutCommand.call();
-  }
-
-  private CheckoutCommand gitCheckoutCommand(Git repo, String branchOrTag) {
-    CheckoutCommand cmd = repo.checkout();
-    if (branchOrTag != null) {
-      cmd = cmd.setName(branchOrTag);
+    if (branch != null) {
+      pullCommand.setRemoteBranchName(branch);
     }
+    log.trace("GIT: Pulling changes from origin for branch [{}]", branch);
+    configureAuthentication(pullCommand);
+    return pullCommand;
+  }
+  
+  private CheckoutCommand gitCheckoutCommand(Git repo, String branchOrTag) throws IOException {
+    CheckoutCommand cmd = repo.checkout();
+    String ref = branchOrTag != null ? branchOrTag :repo.getRepository().getBranch();
+    log.trace("GIT: Check out to revision/tag/branch [{}]", ref);          
+    cmd.setName(ref);
     return cmd;
   }
 
@@ -361,14 +361,15 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private String currentLocalRevision(Git repository) throws VcsException {
-    ObjectId resolvedRevision;
+    String rev = null;
     try {
       String fullBranch = repository.getRepository().getFullBranch();
-      resolvedRevision = repository.getRepository().resolve(fullBranch);
+      ObjectId resolvedRevision = repository.getRepository().resolve(fullBranch);
+      rev = resolvedRevision.getName();
     } catch (RevisionSyntaxException | IOException e) {
       throw new VcsException(e);
     }
-    return resolvedRevision.getName();
+    return rev;
   }
 
   /**
@@ -380,20 +381,30 @@ public class JGitApi implements VersionControlSystem {
    * @param workingCopyUrl
    * @throws VcsException
    */
-  private void checkoutCopy(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
+  private File checkoutCopy(String remoteRepoUrl, File workingCopyUrl) throws VcsException {
     Git bareRepository = null;
+    File cacheClone = null;
     try {
-      CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(getLocalCloneCopy(workingCopyUrl))
-          .setCloneAllBranches(true).setBare(true);
-      configureAuthentication(cloneCommand);
-      bareRepository = cloneCommand.call();
-    } catch (GitAPIException e) {
+      cacheClone =  getLocalCloneCopy(workingCopyUrl).getCanonicalFile();
+      if (cacheClone.exists()) {
+        log.trace("GIT: Cached clone already exists [{}], updating", fullpath(cacheClone));
+        updateCopy(workingCopyUrl);
+      } else {
+        CloneCommand cloneCommand = Git.cloneRepository().setURI(remoteRepoUrl).setDirectory(getLocalCloneCopy(workingCopyUrl))
+            .setCloneAllBranches(true).setBare(true);
+        configureAuthentication(cloneCommand);
+        bareRepository = cloneCommand.call();        
+      }
+    } catch (GitAPIException | IOException e) {
       throw new VcsException(e);
     } finally {
       close(bareRepository);
     }
+    return cacheClone;
   }
 
+  
+  
   private void updateCopy(File workingCopyUrl) throws VcsException {
     Git bareRepository = getBareRepository(getLocalCloneCopy(workingCopyUrl));
     try {
@@ -409,12 +420,10 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private File getLocalCloneCopy(File workingCopyFile) {
-    File copyCloneFile = null;
     String workingCopyDirName = workingCopyFile.getName();
     File workingCopyFileParent = workingCopyFile.getParentFile();
-
-    copyCloneFile = new File(workingCopyFileParent, workingCopyDirName + COPY_CLONE_POSTFIX);
-    return copyCloneFile;
+    String filename = String.format(LOCAL_COPY_FORMAT, workingCopyDirName);        
+    return new File(workingCopyFileParent, filename);
   }
 
   private void pushCopy(File workingCopyUrl) throws VcsException {
@@ -487,4 +496,15 @@ public class JGitApi implements VersionControlSystem {
     }
     return result;
   }
+  
+  private String fullpath(File file) {
+    String result = file.getAbsolutePath();
+    try {
+      result = file.getCanonicalPath();
+    } catch(IOException e) {
+      
+    }
+    return result;
+  }
+  
 }

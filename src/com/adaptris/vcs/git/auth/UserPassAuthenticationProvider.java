@@ -4,7 +4,7 @@ import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
-public class UserPassAuthenticationProvider implements AuthenticationProvider {
+class UserPassAuthenticationProvider implements AuthenticationProvider {
 
   private String user;
   
