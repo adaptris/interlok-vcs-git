@@ -31,6 +31,8 @@
     <dependency org="com.adaptris" name="adp-core-apt" rev="${adp-core-version}" conf="compile->default;ant->default" changing="true"/>
 
     <dependency org="org.eclipse.jgit" name="org.eclipse.jgit" rev="4.1.0.201509280440-r" conf="compile->default"/>
+    <dependency org="commons-io" name="commons-io" rev="2.4" conf="test->default"  />
+    <dependency org="commons-lang" name="commons-lang" rev="2.6" conf="compile->default"  />
 
     <dependency org="junit" name="junit" rev="4.11" conf="test->default"/>
 
