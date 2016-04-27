@@ -5,8 +5,8 @@ import java.io.File;
 import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
+import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.util.FS;
@@ -39,13 +39,18 @@ class SSHAuthenticationProvider implements AuthenticationProvider {
     final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
       @Override
       protected void configure(Host host, Session session) {
-        session.setPassword(getPassPhrase());
       }
       
       @Override
       protected JSch createDefaultJSch(FS fs) throws JSchException {
         JSch defaultJSch = super.createDefaultJSch(fs);
-        defaultJSch.addIdentity(getPrivateKeyFile().getAbsolutePath());
+        try {
+          defaultJSch.addIdentity(getPrivateKeyFile().getAbsolutePath(), getPassPhrase());
+        } catch (JSchException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new JSchException(e.getMessage(), e);
+        }
         return defaultJSch;
       }
     };
