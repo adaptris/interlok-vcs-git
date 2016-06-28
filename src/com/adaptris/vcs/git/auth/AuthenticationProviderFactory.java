@@ -1,5 +1,8 @@
 package com.adaptris.vcs.git.auth;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.trimToEmpty;
+
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -18,9 +21,9 @@ public class AuthenticationProviderFactory {
       AuthenticationProvider create(Properties properties) throws VcsException {
         try {
 
-          AuthenticationProvider authenticationProvider =
-              new UserPassAuthenticationProvider(properties.getProperty(VcsConstants.VCS_USERNAME_KEY), Password
-                  .decode(PropertyResolver.getDefaultInstance().resolve(properties.getProperty(VcsConstants.VCS_PASSWORD_KEY))));
+          AuthenticationProvider authenticationProvider = new UserPassAuthenticationProvider(
+              properties.getProperty(VcsConstants.VCS_USERNAME_KEY),
+              getPasswordProperty(properties, VcsConstants.VCS_PASSWORD_KEY));
           return authenticationProvider;
         } catch (Exception ex) {
           throw new VcsException(ex);
@@ -33,8 +36,7 @@ public class AuthenticationProviderFactory {
       AuthenticationProvider create(Properties properties) throws VcsException {
         try {
           AuthenticationProvider authenticationProvider = new SSHAuthenticationProvider(
-              Password.decode(
-                  PropertyResolver.getDefaultInstance().resolve(properties.getProperty(VcsConstants.VCS_SSH_PASSPHRASE_KEY))),
+              getPasswordProperty(properties, VcsConstants.VCS_SSH_PASSPHRASE_KEY),
               FsHelper.createFileReference(
                   FsHelper.createUrlFromString(properties.getProperty(VcsConstants.VCS_SSH_KEYFILE_URL_KEY), true)));
           return authenticationProvider;
@@ -43,6 +45,14 @@ public class AuthenticationProviderFactory {
         }
       }
     };
+
+    private static String getPasswordProperty(Properties properties, String name) throws Exception {
+      String passwordProp = PropertyResolver.getDefaultInstance().resolve(trimToEmpty(properties.getProperty(name)));
+      if (!isEmpty(passwordProp)) {
+        return Password.decode(passwordProp);
+      }
+      return passwordProp;
+    }
 
     abstract AuthenticationProvider create(Properties properties) throws VcsException;
   }
