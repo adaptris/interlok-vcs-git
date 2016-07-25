@@ -55,12 +55,19 @@ public class JGitApi implements VersionControlSystem {
   private static final String LOCAL_HEAD_BRANCH = "refs/heads/%1s";
 
   private AuthenticationProvider authenticationProvider;
+  private transient boolean hardReset;
 
   public JGitApi() {
+    hardReset = false;
   }
 
-  public JGitApi(AuthenticationProvider authenticationProvider) {
+  public JGitApi(boolean resetRepo) {
+    hardReset = resetRepo;
+  }
+
+  public JGitApi(AuthenticationProvider authenticationProvider, boolean resetRepo) {
     setAuthenticationProvider(authenticationProvider);
+    hardReset = resetRepo;
   }
 
   @Override
@@ -112,7 +119,7 @@ public class JGitApi implements VersionControlSystem {
       }
       gitCheckout(localRepository, revision).call();
       rev = currentLocalRevision(localRepository);
-    } catch (GitAPIException|IOException e) {
+    } catch (GitAPIException | IOException e) {
       throw new VcsException(e);
     } finally {
       close(localRepository);
@@ -125,6 +132,7 @@ public class JGitApi implements VersionControlSystem {
     Git localRepository = getLocalRepository(workingCopyUrl);
     String rev = null;
     try {
+      resetRepository(localRepository, null);
       gitFetch(localRepository).call();
       if (isRemoteBranch(localRepository, tagName)) {
         createBranchIfMissing(localRepository, tagName);
@@ -152,6 +160,7 @@ public class JGitApi implements VersionControlSystem {
     String rev = null;
     Git localRepository = getLocalRepository(workingCopyUrl);
     try {
+      resetRepository(localRepository, null);
       gitFetch(localRepository).call();
       gitPull(localRepository).call();
       gitCheckout(localRepository, null).call();
@@ -270,8 +279,21 @@ public class JGitApi implements VersionControlSystem {
       log.trace("GIT: Check out to revision/tag/branch [{}]", ref);
     cmd.setName(ref);
     return cmd;
-
   }
+
+
+  private void resetRepository(Git repo, String branchOrTag) throws IOException, CheckoutConflictException, GitAPIException {
+    if (hardReset) {
+      ResetCommand cmd = repo.reset();
+      String ref = branchOrTag != null ? branchOrTag : repo.getRepository().getBranch();
+      log.trace("GIT: Hard Reset back to revision/tag/branch [{}]", ref);
+      cmd.setMode(ResetType.HARD);
+      cmd.call();
+    }
+  }
+
+
+
   private void push(Git localRepository, RevCommit revCommit) throws GitAPIException, CheckoutConflictException, VcsException {
     try {
       // This will push to our copy of the clone.
@@ -469,15 +491,15 @@ public class JGitApi implements VersionControlSystem {
     if (repo != null)
       repo.close();
   }
-  
+
   private String fullpath(File file) {
     String result = file.getAbsolutePath();
     try {
       result = file.getCanonicalPath();
-    } catch(IOException e) {
-      
+    } catch (IOException e) {
+
     }
     return result;
   }
-  
+
 }
