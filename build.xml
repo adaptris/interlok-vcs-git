@@ -2,7 +2,7 @@
 
   <property file="build.properties"/>
   <property file="ivy.properties"/>
-  <import file="${basedir}/../resources/ant-ivy-includes.xml"/> <!-- Ivy tasks -->
+  <import file="${basedir}/ivy/ant-ivy-includes.xml"/> <!-- Ivy tasks -->
 
   <tstamp>
     <format property="today" pattern="yyyy-MM-dd" locale="en"/>
@@ -14,8 +14,8 @@
     <property name="manifest.title" value="Interlok Integration to GIT"/>
     <property name="manifest.vendor" value="Adaptris Ltd"/>
 
-    <property name="ivy.publish.revision" value="3.3-SNAPSHOT"/>  <!-- Version number of this artifact -->
-    <property name="adp-core-version" value="3.3-SNAPSHOT"/>
+    <property name="ivy.publish.revision" value="3.4-SNAPSHOT"/>  <!-- Version number of this artifact -->
+    <property name="adp-core-version" value="3.4-SNAPSHOT"/>
 
     <property name="javac.target.version"   value="1.7"/>
     <property name="src.dir" value="${basedir}/src"/>

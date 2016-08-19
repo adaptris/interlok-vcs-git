@@ -1,8 +1,10 @@
 package com.adaptris.vcs.git;
 
+import static com.adaptris.core.management.vcs.VcsConstants.VCS_CLEAN_UPDATE;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_LOCAL_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REMOTE_REPO_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REVISION_KEY;
+import static org.apache.commons.lang.BooleanUtils.toBoolean;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
 import java.io.File;
@@ -48,7 +50,8 @@ public class GitVCS implements RuntimeVersionControl {
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
   
   private static final String VCS_NAME = "Git";
-  
+
+  private static final String HARD_RESET_DEFAULT = "false";
   private BootstrapProperties bootstrapProperties;
   
   private transient VersionControlSystem api;
@@ -136,15 +139,15 @@ public class GitVCS implements RuntimeVersionControl {
   
   
   @Override
-  public VersionControlSystem getApi(Properties properties) throws VcsException {
+  public JGitApi getApi(Properties properties) throws VcsException {
     AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
     AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
-      
-    VersionControlSystem api = null;
+    boolean force = toBoolean(properties.getProperty(VCS_CLEAN_UPDATE, HARD_RESET_DEFAULT));
+    JGitApi api = null;
     if(authenticationProvider != null) {
-      api = new JGitApi(authenticationProvider);
+      api = new JGitApi(authenticationProvider, force);
     } else {
-      api = new JGitApi();
+      api = new JGitApi(force);
     }
       
     return api;
