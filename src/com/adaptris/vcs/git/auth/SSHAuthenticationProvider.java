@@ -1,32 +1,29 @@
 package com.adaptris.vcs.git.auth;
 
-import java.io.File;
+import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_KEYFILE_URL_KEY;
+import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_PASSPHRASE_KEY;
 
-import org.eclipse.jgit.api.TransportConfigCallback;
+import java.io.File;
+import java.util.Properties;
+
 import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.util.FS;
 
+import com.adaptris.core.fs.FsHelper;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 
-class SSHAuthenticationProvider implements AuthenticationProvider {
+class SSHAuthenticationProvider extends AuthenticationProviderImpl {
 
   private String passPhrase;
   
   private File privateKeyFile;
-  
-  public SSHAuthenticationProvider() {
-  }
-  
-  public SSHAuthenticationProvider(String passPhrase, File provateKeyFile) {
-    this.setPassPhrase(passPhrase);
-    this.setPrivateKeyFile(provateKeyFile);
+
+  public SSHAuthenticationProvider(Properties p) throws Exception {
+    super(p);
+    setPassPhrase(getPasswordProperty(p, VCS_SSH_PASSPHRASE_KEY));
+    setPrivateKeyFile(FsHelper
+        .createFileReference(FsHelper.createUrlFromString(p.getProperty(VCS_SSH_KEYFILE_URL_KEY), true)));
   }
   
   @Override
@@ -35,31 +32,21 @@ class SSHAuthenticationProvider implements AuthenticationProvider {
   }
 
   @Override
-  public TransportConfigCallback getTransportInterceptor() {
-    final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
-      @Override
-      protected void configure(Host host, Session session) {
-      }
-      
+  ProxySupport createSessionFactory() {
+    return new ProxySupport() {
       @Override
       protected JSch createDefaultJSch(FS fs) throws JSchException {
         JSch defaultJSch = super.createDefaultJSch(fs);
         try {
           defaultJSch.addIdentity(getPrivateKeyFile().getAbsolutePath(), getPassPhrase());
-        } catch (JSchException e) {
+        }
+        catch (JSchException e) {
           throw e;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           throw new JSchException(e.getMessage(), e);
         }
         return defaultJSch;
-      }
-    };
-
-    return new TransportConfigCallback() {
-      @Override
-      public void configure(Transport transport) {
-        SshTransport sshTransport = (SshTransport) transport;
-        sshTransport.setSshSessionFactory(sshSessionFactory);
       }
     };
   }
