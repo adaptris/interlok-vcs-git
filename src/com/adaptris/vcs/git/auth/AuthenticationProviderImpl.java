@@ -44,42 +44,42 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
   /**
    * @return the proxy
    */
-  public String getHttpProxy() {
+  String getHttpProxy() {
     return httpProxy;
   }
 
   /**
    * @param proxy the proxy to set
    */
-  public void setHttpProxy(String proxy) {
+  void setHttpProxy(String proxy) {
     this.httpProxy = proxy;
   }
 
   /**
    * @return the proxyUser
    */
-  public String getProxyUser() {
+  String getProxyUser() {
     return proxyUser;
   }
 
   /**
    * @param proxyUser the proxyUser to set
    */
-  public void setProxyUser(String proxyUser) {
+  void setProxyUser(String proxyUser) {
     this.proxyUser = proxyUser;
   }
 
   /**
    * @return the proxyPassword
    */
-  public String getProxyPassword() {
+  String getProxyPassword() {
     return proxyPassword;
   }
 
   /**
    * @param proxyPassword the proxyPassword to set
    */
-  public void setProxyPassword(String proxyPassword) {
+  void setProxyPassword(String proxyPassword) {
     this.proxyPassword = proxyPassword;
   }
 
@@ -96,16 +96,6 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
     };
   }
 
-  protected ProxyHTTP createProxy() {
-    ProxyHTTP proxy = null;
-    if (!isEmpty(httpProxy)) {
-      proxy = new ProxyHTTP(httpProxy);
-      if (!isEmpty(proxyUser)) {
-        proxy.setUserPasswd(proxyUser, proxyPassword);
-      }
-    }
-    return proxy;
-  }
 
 
   ProxySupport createSessionFactory() {
@@ -113,12 +103,28 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
   }
 
   protected class ProxySupport extends JschConfigSessionFactory {
+
+    public ProxySupport() {
+    }
+
     @Override
     protected void configure(Host hc, Session session) {
       ProxyHTTP proxy = createProxy();
       if (proxy != null) {
-        session.setProxy(proxy);
+        session.setProxy(createProxy());
       }
     }
+
+    private ProxyHTTP createProxy() {
+      ProxyHTTP proxy = null;
+      if (!isEmpty(getHttpProxy())) {
+        proxy = new ProxyHTTP(getHttpProxy());
+        if (!isEmpty(getProxyUser())) {
+          proxy.setUserPasswd(getProxyUser(), getProxyPassword());
+        }
+      }
+      return proxy;
+    }
+
   }
 }

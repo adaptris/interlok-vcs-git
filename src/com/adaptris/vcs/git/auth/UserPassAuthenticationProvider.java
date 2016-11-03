@@ -26,19 +26,19 @@ class UserPassAuthenticationProvider extends AuthenticationProviderImpl {
     return new UsernamePasswordCredentialsProvider(getUser(), getPassword());
   }
 
-  public String getUser() {
+  String getUser() {
     return user;
   }
 
-  public void setUser(String user) {
+  void setUser(String user) {
     this.user = user;
   }
 
-  public String getPassword() {
+  String getPassword() {
     return password;
   }
 
-  public void setPassword(String password) {
+  void setPassword(String password) {
     this.password = password;
   }
 

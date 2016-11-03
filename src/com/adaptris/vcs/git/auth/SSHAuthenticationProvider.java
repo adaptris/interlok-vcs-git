@@ -51,19 +51,19 @@ class SSHAuthenticationProvider extends AuthenticationProviderImpl {
     };
   }
 
-  public String getPassPhrase() {
+  String getPassPhrase() {
     return passPhrase;
   }
 
-  public void setPassPhrase(String passPhrase) {
+  void setPassPhrase(String passPhrase) {
     this.passPhrase = passPhrase;
   }
 
-  public File getPrivateKeyFile() {
+  File getPrivateKeyFile() {
     return privateKeyFile;
   }
 
-  public void setPrivateKeyFile(File privateKeyFile) {
+  void setPrivateKeyFile(File privateKeyFile) {
     this.privateKeyFile = privateKeyFile;
   }
 }
