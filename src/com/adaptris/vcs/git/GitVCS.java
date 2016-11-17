@@ -140,16 +140,9 @@ public class GitVCS implements RuntimeVersionControl {
   
   @Override
   public JGitApi getApi(Properties properties) throws VcsException {
-    AuthenticationProviderFactory authenticationProviderFactory = new AuthenticationProviderFactory();
-    AuthenticationProvider authenticationProvider = authenticationProviderFactory.createAuthenticationProvider(properties);
+    AuthenticationProvider authenticationProvider = new AuthenticationProviderFactory().createAuthenticationProvider(properties);
     boolean force = toBoolean(properties.getProperty(VCS_CLEAN_UPDATE, HARD_RESET_DEFAULT));
-    JGitApi api = null;
-    if(authenticationProvider != null) {
-      api = new JGitApi(authenticationProvider, force);
-    } else {
-      api = new JGitApi(force);
-    }
-      
+    JGitApi api =  new JGitApi(authenticationProvider, force);
     return api;
   }
 
