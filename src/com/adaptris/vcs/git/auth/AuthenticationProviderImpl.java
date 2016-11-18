@@ -2,6 +2,7 @@ package com.adaptris.vcs.git.auth;
 
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_PROXY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_PROXY_USERNAME;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToEmpty;
 
@@ -12,17 +13,26 @@ import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.adaptris.core.management.properties.PropertyResolver;
 import com.adaptris.security.password.Password;
+import com.adaptris.vcs.git.GitVCS;
+import com.adaptris.vcs.git.api.JGitApi;
+import com.jcraft.jsch.Proxy;
 import com.jcraft.jsch.ProxyHTTP;
+import com.jcraft.jsch.ProxySOCKS4;
+import com.jcraft.jsch.ProxySOCKS5;
 import com.jcraft.jsch.Session;
 
 abstract class AuthenticationProviderImpl implements AuthenticationProvider {
 
-  private String httpProxy = null;
+  private String proxy = null;
+  private String proxyType = null;
   private String proxyUser = null;
   private String proxyPassword = null;
+  protected static final Logger log = LoggerFactory.getLogger(JGitApi.class);
 
   protected Properties config;
 
@@ -30,7 +40,8 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
     config = p;
     setProxyUser(config.getProperty(VCS_SSH_PROXY_USERNAME));
     setProxyPassword(getPasswordProperty(config, VCS_SSH_PROXY_USERNAME));
-    setHttpProxy(config.getProperty(VCS_SSH_PROXY));
+    setProxy(config.getProperty(VCS_SSH_PROXY));
+    setProxyType(config.getProperty(GitVCS.VCS_PROXY_TYPE));
   }
 
   protected static String getPasswordProperty(Properties properties, String name) throws Exception {
@@ -41,46 +52,36 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
     return passwordProp;
   }
 
-  /**
-   * @return the proxy
-   */
-  String getHttpProxy() {
-    return httpProxy;
+  String getProxy() {
+    return proxy;
   }
 
-  /**
-   * @param proxy the proxy to set
-   */
-  void setHttpProxy(String proxy) {
-    this.httpProxy = proxy;
+  void setProxy(String proxy) {
+    this.proxy = proxy;
   }
 
-  /**
-   * @return the proxyUser
-   */
   String getProxyUser() {
     return proxyUser;
   }
 
-  /**
-   * @param proxyUser the proxyUser to set
-   */
   void setProxyUser(String proxyUser) {
     this.proxyUser = proxyUser;
   }
 
-  /**
-   * @return the proxyPassword
-   */
   String getProxyPassword() {
     return proxyPassword;
   }
 
-  /**
-   * @param proxyPassword the proxyPassword to set
-   */
   void setProxyPassword(String proxyPassword) {
     this.proxyPassword = proxyPassword;
+  }
+
+  String getProxyType() {
+    return proxyType;
+  }
+
+  void setProxyType(String proxyType) {
+    this.proxyType = proxyType;
   }
 
   @Override
@@ -109,22 +110,71 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
 
     @Override
     protected void configure(Host hc, Session session) {
-      ProxyHTTP proxy = createProxy();
-      if (proxy != null) {
-        session.setProxy(createProxy());
+      if (!isEmpty(getProxy())) {
+        ProxyBuilder builder = ProxyBuilder.parse(getProxyType());
+        Proxy actualProxy = builder.build(getProxy());
+        if (!isEmpty(getProxyUser())) {
+          builder.addUserCredentials(actualProxy, getProxyUser(), getProxyPassword());
+        }
+        session.setProxy(actualProxy);
       }
+    }
+  }
+
+  enum ProxyBuilder {
+    HTTP {
+      @Override
+      Proxy build(String proxy) {
+        // log.trace("HTTP Proxy : {}", proxy);
+        return new ProxyHTTP(proxy);
+      }
+
+      @Override
+      Proxy addUserCredentials(Proxy proxy, String user, String passwd) {
+        ((ProxyHTTP) proxy).setUserPasswd(user, passwd);
+        return proxy;
+      }
+    },
+    SOCKS5 {
+
+      @Override
+      Proxy build(String proxy) {
+        // log.trace("SOCKS5 Proxy : {}", proxy);
+        return new ProxySOCKS4(proxy);
+      }
+
+      @Override
+      Proxy addUserCredentials(Proxy proxy, String user, String passwd) {
+        ((ProxySOCKS4) proxy).setUserPasswd(user, passwd);
+        return proxy;
+      }
+
+    },
+    SOCKS4 {
+
+      @Override
+      Proxy build(String proxy) {
+        // log.trace("SOCKS4 Proxy : {}", proxy);
+        return new ProxySOCKS5(proxy);
+      }
+
+      @Override
+      Proxy addUserCredentials(Proxy proxy, String user, String passwd) {
+        ((ProxySOCKS5) proxy).setUserPasswd(user, passwd);
+        return proxy;
+      }
+    };
+
+    public static ProxyBuilder parse(String type) {
+      if (isBlank(type)) {
+        return HTTP;
+      }
+      return ProxyBuilder.valueOf(type.toUpperCase());
     }
 
-    private ProxyHTTP createProxy() {
-      ProxyHTTP proxy = null;
-      if (!isEmpty(getHttpProxy())) {
-        proxy = new ProxyHTTP(getHttpProxy());
-        if (!isEmpty(getProxyUser())) {
-          proxy.setUserPasswd(getProxyUser(), getProxyPassword());
-        }
-      }
-      return proxy;
-    }
+    abstract Proxy build(String proxy);
+
+    abstract Proxy addUserCredentials(Proxy proxy, String user, String password);
 
   }
 }
