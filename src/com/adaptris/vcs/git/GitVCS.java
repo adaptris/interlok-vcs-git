@@ -50,6 +50,7 @@ public class GitVCS implements RuntimeVersionControl {
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
   
   private static final String VCS_NAME = "Git";
+  public static final String VCS_PROXY_TYPE = "vcs.ssh.proxy.type";
 
   private static final String HARD_RESET_DEFAULT = "false";
   private BootstrapProperties bootstrapProperties;
