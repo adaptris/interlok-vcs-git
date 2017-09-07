@@ -137,12 +137,12 @@
   </target>
 
   <!-- clean -->
-  <target name="clean" depends="init" description="Remove build artifacts">
+  <target name="clean" depends="init,init-ivy" description="Remove build artifacts">
     <delete dir="${build.dir}"/>
     <delete dir="${tests.output.dir}"/>
     <delete>
       <fileset file="${coverage.metadata.file}"/>
-
+      <fileset file="${ivy.jar.file}"/>
     </delete>
   </target>
 

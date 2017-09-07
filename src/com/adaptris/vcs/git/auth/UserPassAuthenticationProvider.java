@@ -42,4 +42,8 @@ class UserPassAuthenticationProvider extends AuthenticationProviderImpl {
     this.password = password;
   }
 
+  public String toString() {
+    return "Auth:Username+Password";
+  }
+
 }

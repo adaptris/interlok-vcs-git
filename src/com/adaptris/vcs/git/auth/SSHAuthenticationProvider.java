@@ -66,4 +66,8 @@ class SSHAuthenticationProvider extends AuthenticationProviderImpl {
   void setPrivateKeyFile(File privateKeyFile) {
     this.privateKeyFile = privateKeyFile;
   }
+
+  public String toString() {
+    return "Auth:SSH+KEY";
+  }
 }
