@@ -15,4 +15,7 @@ class NullAuthenticationProvider extends AuthenticationProviderImpl {
     return null;
   }
 
+  public String toString() {
+    return "Auth:NONE";
+  }
 }
