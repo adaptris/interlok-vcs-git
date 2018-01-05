@@ -22,7 +22,7 @@
   <publications>
      <artifact name="adp-vcs-git" type="jar" ext="jar"/>
      <artifact name="adp-vcs-git" type="pom" ext="pom"/>
-     <artifact name="adp-vcs-git-javadoc" type="javadoc" ext="zip" conf="javadoc"/>
+
      <artifact type="javadoc" ext="jar" conf="javadoc" m:classifier="javadoc"/>
   </publications>
   <dependencies>
