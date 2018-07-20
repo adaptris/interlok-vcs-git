@@ -78,6 +78,7 @@ dependencies {
   compile ("org.eclipse.jgit:org.eclipse.jgit:4.1.0.201509280440-r")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.2")
+  compile ("com.jcraft:jsch:0.1.54")
 
   annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.0.16")
@@ -221,11 +222,12 @@ publishing {
       artifact sourcesJar { classifier "sources" }
 
       pom.withXml {
-        asNode().appendNode("description", "Using Apache Kafka as a messaging platform")
+        asNode().appendNode("description", "Checking config out of GIT on startup")
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.8.0+")
-        properties.appendNode("tags", "kafka,messaging")
+        properties.appendNode("tags", "git,vcs")
         properties.appendNode("license", "false")
+        properties.appendNode("url", "https://interlok.adaptris.net/interlok-docs/advanced-vcs-git.html")
       }
     }
   }
