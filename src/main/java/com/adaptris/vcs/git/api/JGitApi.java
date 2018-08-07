@@ -359,8 +359,8 @@ public class JGitApi implements VersionControlSystem {
 
   private LogCommand gitLogRemoteChanges(Git gitRepo) throws GitAPIException, IOException {
     Repository repo = gitRepo.getRepository();
-    Ref currentBranchRef = repo.getRef(repo.getBranch());
-    Ref remoteBranchRef = repo.getRef(String.format(REMOTE_ORIGIN_BRANCH, repo.getBranch()));
+    Ref currentBranchRef = repo.findRef(repo.getBranch());
+    Ref remoteBranchRef = repo.findRef(String.format(REMOTE_ORIGIN_BRANCH, repo.getBranch()));
     return gitRepo.log().addRange(currentBranchRef.getObjectId(), remoteBranchRef.getObjectId());
   }
 
