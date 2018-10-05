@@ -14,6 +14,7 @@ ext {
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.25'
+  log4j2Version = '2.8.1'
 }
 
 ext.hasGraphViz = { ->
@@ -75,20 +76,20 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:4.1.0.201509280440-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.1.1.201809181055-r")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.6")
   compile ("com.jcraft:jsch:0.1.54")
 
-  annotationProcessor ("com.adaptris:interlok-common:$interlokCoreVersion") {changing= true}
+  annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.0.18")
 
   testCompile ('junit:junit:4.12')
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
-  testCompile ("org.apache.logging.log4j:log4j-core:2.8.1")
-  testCompile ("org.apache.logging.log4j:log4j-1.2-api:2.8.1")
-  testCompile ("org.apache.logging.log4j:log4j-slf4j-impl:2.8.1")
-  testCompile ("org.apache.logging.log4j:log4j-api:2.8.1")
+  testCompile ("org.apache.logging.log4j:log4j-core:$log4j2Version")
+  testCompile ("org.apache.logging.log4j:log4j-1.2-api:$log4j2Version")
+  testCompile ("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
+  testCompile ("org.apache.logging.log4j:log4j-api:$log4j2Version")
   testCompile ("org.mockito:mockito-all:1.10.19")
   javadoc("com.adaptris:interlok-core-apt:$interlokCoreVersion") { changing= true}
 
@@ -159,11 +160,6 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
   from javadoc.destinationDir
 }
 
-task examplesJar(type: Jar, dependsOn: test) {
-  classifier = 'examples'
-  from new File(buildDir, '/examples')
-}
-
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -208,7 +204,6 @@ task umlJavadoc(type: Javadoc) {
 
 artifacts {
   archives javadocJar
-  archives examplesJar
   archives sourcesJar
 }
 
@@ -218,7 +213,6 @@ publishing {
       from components.java
 
       artifact javadocJar { classifier "javadoc" }
-      artifact examplesJar { classifier "examples" }
       artifact sourcesJar { classifier "sources" }
 
       pom.withXml {

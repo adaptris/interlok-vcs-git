@@ -227,7 +227,7 @@ public class JGitApi implements VersionControlSystem {
   private void createBranchIfMissing(Git localRepository, String branchName) throws IOException, GitAPIException {
     String localRef = String.format(LOCAL_HEAD_BRANCH, branchName);
     String remoteRef = String.format(REMOTE_ORIGIN_BRANCH, branchName);
-    if (localRepository.getRepository().getRef(localRef) != null) {
+    if (localRepository.getRepository().findRef(localRef) != null) {
       log.debug("GIT: Matched [{}] against existing head [{}]", branchName, localRef);
       // the ref already exists, we don't need to do anything.
     } else {
@@ -235,7 +235,6 @@ public class JGitApi implements VersionControlSystem {
       localRepository.branchCreate().setName(branchName).setStartPoint(remoteRef).setUpstreamMode(SetupUpstreamMode.TRACK).call();
     }
   }
-
 
   private Git gitClone(String remoteRepo, File localRepo, String initialBranch)
       throws InvalidRemoteException, TransportException, GitAPIException {
@@ -360,8 +359,8 @@ public class JGitApi implements VersionControlSystem {
 
   private LogCommand gitLogRemoteChanges(Git gitRepo) throws GitAPIException, IOException {
     Repository repo = gitRepo.getRepository();
-    Ref currentBranchRef = repo.getRef(repo.getBranch());
-    Ref remoteBranchRef = repo.getRef(String.format(REMOTE_ORIGIN_BRANCH, repo.getBranch()));
+    Ref currentBranchRef = repo.findRef(repo.getBranch());
+    Ref remoteBranchRef = repo.findRef(String.format(REMOTE_ORIGIN_BRANCH, repo.getBranch()));
     return gitRepo.log().addRange(currentBranchRef.getObjectId(), remoteBranchRef.getObjectId());
   }
 
