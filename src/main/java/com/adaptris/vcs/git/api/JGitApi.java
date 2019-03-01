@@ -1,5 +1,7 @@
 package com.adaptris.vcs.git.api;
 
+import static com.adaptris.vcs.git.api.PathUtil.toUnixPath;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,8 +48,6 @@ public class JGitApi implements VersionControlSystem {
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
 
   private static final String IMPL_NAME = "Git";
-
-  private static final String LOCAL_COPY_FORMAT = ".%1s_cacheCopy_doNotEdit";
 
   private static final String ALL_FILE_PATTERN = ".";
   private static final String REMOTE_ORIGIN_REF = "refs/remotes/origin/%1s";
@@ -196,7 +196,8 @@ public class JGitApi implements VersionControlSystem {
     try {
       if (fileNames.length > 0) {
         for (String fileName : fileNames) {
-          localRepository.add().addFilepattern(fileName).call();
+          // The file pattern need to use / and not \ so we convert it in case.
+          localRepository.add().addFilepattern(toUnixPath(fileName)).call();
         }
         RevCommit revCommit = localRepository.commit().setMessage(commitMessage).call();
         push(localRepository, revCommit);
@@ -274,8 +275,9 @@ public class JGitApi implements VersionControlSystem {
   private CheckoutCommand gitCheckout(Git repo, String branchOrTag, boolean logging) throws IOException {
     CheckoutCommand cmd = repo.checkout();
     String ref = branchOrTag != null ? branchOrTag : repo.getRepository().getBranch();
-    if (logging)
+    if (logging) {
       log.trace("GIT: Check out to revision/tag/branch [{}]", ref);
+    }
     cmd.setName(ref);
     return cmd;
   }
@@ -394,7 +396,6 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private List<RevisionHistoryItem> getLocalRevisions(Git gitRepo, int limit) throws GitAPIException, IOException {
-    List<RevisionHistoryItem> result = new ArrayList<>();
     ObjectId head = gitRepo.getRepository().resolve(Constants.HEAD);
     return toHistoryList(gitRepo.log().add(head).setMaxCount(limit).call());
   }
@@ -487,18 +488,9 @@ public class JGitApi implements VersionControlSystem {
   }
 
   private void close(Git repo) {
-    if (repo != null)
+    if (repo != null) {
       repo.close();
-  }
-
-  private String fullpath(File file) {
-    String result = file.getAbsolutePath();
-    try {
-      result = file.getCanonicalPath();
-    } catch (IOException e) {
-
     }
-    return result;
   }
 
 }
