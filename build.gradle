@@ -1,5 +1,13 @@
 import org.apache.tools.ant.taskdefs.condition.Os
-
+plugins {
+  id 'java'
+  id 'maven'
+  id 'maven-publish'
+  id 'jacoco'
+  // Manage optional dependencies in maven pom.
+  id 'nebula.optional-base' version '4.0.1'
+  id 'com.github.spotbugs' version '1.6.10'
+}
 ext {
   interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.8-SNAPSHOT'
   releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '3.8-SNAPSHOT'
@@ -16,8 +24,8 @@ ext {
   componentName='Interlok/Integration with Git'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '1.7.25'
-  log4j2Version = '2.8.1'
+  slf4jVersion = '1.7.26'
+  log4j2Version = '2.11.2'
 }
 
 ext.hasGraphViz = { ->
@@ -37,11 +45,6 @@ if (JavaVersion.current().isJava8Compatible()) {
     }
   }
 }
-
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: "jacoco"
 
 sourceCompatibility = 1.8
 group   = 'com.adaptris'
@@ -80,9 +83,9 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.3.0.201903130848-r")
   compile ("commons-lang:commons-lang:2.6")
-  compile ("org.apache.httpcomponents:httpclient:4.5.7")
+  compile ("org.apache.httpcomponents:httpclient:4.5.8")
   compile ("com.jcraft:jsch:0.1.55")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
@@ -253,6 +256,27 @@ publishing {
       }
       url mavenPublishUrl
     }
+  }
+}
+
+
+spotbugs {
+  // showProgress = "true"
+  effort = "max"
+  // Ignore failures?
+  // ignoreFailures = false
+
+  // We only care about "high priority" issues...
+  reportLevel = "high"
+}
+
+// disable spotbugsTests which checks our test code..
+spotbugsTest.enabled = false
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+  reports {
+    xml.enabled = false
+    html.enabled = true
   }
 }
 
