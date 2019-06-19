@@ -21,7 +21,7 @@ ext {
 
   interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : javadocsBaseUrl + "/interlok-core/" + interlokCoreVersion
   interlokCommonJavadocs= project.hasProperty('interlokCommonJavadocs') ? project.getProperty('interlokCommonJavadocs') : javadocsBaseUrl + "/interlok-common/" + interlokCoreVersion
-  componentName='Interlok/Integration with Git'
+  componentName='Interlok/VCS:GIT'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.26'
@@ -240,6 +240,7 @@ publishing {
 
       pom.withXml {
         asNode().appendNode("description", "Checking config out of GIT on startup")
+        asNode().appendNode("name", componentName)
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.8.0+")
         properties.appendNode("tags", "git,vcs")
