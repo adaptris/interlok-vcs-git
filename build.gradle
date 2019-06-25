@@ -5,12 +5,12 @@ plugins {
   id 'maven-publish'
   id 'jacoco'
   // Manage optional dependencies in maven pom.
-  id 'nebula.optional-base' version '4.0.1'
-  id 'com.github.spotbugs' version '1.6.10'
+  id 'nebula.optional-base' version '5.0.3'
+  id 'com.github.spotbugs' version '2.0.0'
 }
 ext {
-  interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.8-SNAPSHOT'
-  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '3.8-SNAPSHOT'
+  interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.9-SNAPSHOT'
+  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '3.9-SNAPSHOT'
   nexusBaseUrl = project.hasProperty('nexusBaseUrl') ? project.getProperty('nexusBaseUrl') : 'https://nexus.adaptris.net/nexus'
   mavenPublishUrl = project.hasProperty('mavenPublishUrl') ? project.getProperty('mavenPublishUrl') : nexusBaseUrl + '/content/repositories/snapshots'
   javadocsBaseUrl = nexusBaseUrl + "/content/sites/javadocs/com/adaptris"
@@ -21,7 +21,7 @@ ext {
 
   interlokJavadocs= project.hasProperty('interlokJavadocs') ? project.getProperty('interlokJavadocs') : javadocsBaseUrl + "/interlok-core/" + interlokCoreVersion
   interlokCommonJavadocs= project.hasProperty('interlokCommonJavadocs') ? project.getProperty('interlokCommonJavadocs') : javadocsBaseUrl + "/interlok-common/" + interlokCoreVersion
-  componentName='Interlok/Integration with Git'
+  componentName='Interlok/VCS:GIT'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.26'
@@ -55,7 +55,7 @@ repositories {
   mavenCentral()
   maven { url "$defaultNexusRepo" }
   maven { url "$nexusBaseUrl/content/groups/public" }
-  maven { url "$nexusBaseUrl/content/repositories/snapshots" }
+  maven { url "$nexusBaseUrl/content/groups/interlok" }
 }
 
 
@@ -83,13 +83,13 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.3.0.201903130848-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.4.0.201906121030-r")
   compile ("commons-lang:commons-lang:2.6")
-  compile ("org.apache.httpcomponents:httpclient:4.5.8")
+  compile ("org.apache.httpcomponents:httpclient:4.5.9")
   compile ("com.jcraft:jsch:0.1.55")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
-  umlDoclet("nl.talsmasoftware:umldoclet:1.1.3")
+  umlDoclet("nl.talsmasoftware:umldoclet:1.1.4")
 
   testCompile ('junit:junit:4.12')
   testCompile ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true}
@@ -165,7 +165,7 @@ javadoc {
 }
 
 jacoco {
-  toolVersion="0.8.1"
+  toolVersion="0.8.3"
 }
 
 jacocoTestReport {
@@ -240,6 +240,7 @@ publishing {
 
       pom.withXml {
         asNode().appendNode("description", "Checking config out of GIT on startup")
+        asNode().appendNode("name", componentName)
         def properties = asNode().appendNode("properties")
         properties.appendNode("target", "3.8.0+")
         properties.appendNode("tags", "git,vcs")
