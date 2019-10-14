@@ -83,7 +83,7 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.5.0.201909110433-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.10")
   compile ("com.jcraft:jsch:0.1.55")
