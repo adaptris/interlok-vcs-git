@@ -6,7 +6,7 @@ plugins {
   id 'jacoco'
   // Manage optional dependencies in maven pom.
   id 'nebula.optional-base' version '5.0.3'
-  id 'com.github.spotbugs' version '2.0.0'
+  id 'com.github.spotbugs' version '3.0.0'
 }
 ext {
   interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.9-SNAPSHOT'
@@ -24,7 +24,7 @@ ext {
   componentName='Interlok/VCS:GIT'
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '1.7.28'
+  slf4jVersion = '1.7.29'
   log4j2Version = '2.12.1'
 }
 
@@ -44,6 +44,24 @@ if (JavaVersion.current().isJava8Compatible()) {
       options.addStringOption('Xdoclint:none', '-quiet')
     }
   }
+}
+ext.gitBranchNameOrTimestamp = { branchName ->
+  if (branchName.equals("HEAD") || branchName.equals("develop") || branchName.startsWith("release")) {
+    return new Date().format('HH:mm:ss z');
+  }
+  return branchName;
+}
+
+ext.buildInfo = { ->
+   new ByteArrayOutputStream().withStream { os ->
+      exec {
+        executable = "git"
+        args = ["rev-parse", "--abbrev-ref", "HEAD"]
+        standardOutput = os
+      }
+      def branchName = os.toString().replaceAll("\r", "").replaceAll("\n", "").trim();
+      return gitBranchNameOrTimestamp(branchName);
+    }
 }
 
 sourceCompatibility = 1.8
@@ -83,7 +101,7 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.5.0.201909110433-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.10")
   compile ("com.jcraft:jsch:0.1.55")
@@ -132,6 +150,7 @@ task generateVersion {
       entry(key: 'artifactId', value: project.name)
       entry(key: 'build.version', value: releaseVersion)
       entry(key: 'build.date', value: new Date().format('yyyy-MM-dd'))
+      entry(key: 'build.info', value: buildInfo())
     }
   }
 }
@@ -162,10 +181,6 @@ javadoc {
     options.addStringOption "tagletpath", configurations.javadoc.asPath
     title= componentName
   }
-}
-
-jacoco {
-  toolVersion="0.8.3"
 }
 
 jacocoTestReport {
