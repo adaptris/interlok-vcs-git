@@ -5,7 +5,7 @@ import static com.adaptris.core.management.vcs.VcsConstants.VCS_PASSWORD_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REMOTE_REPO_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_KEYFILE_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_USERNAME_KEY;
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import java.util.Properties;
 

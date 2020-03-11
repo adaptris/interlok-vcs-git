@@ -4,8 +4,8 @@ import static com.adaptris.core.management.vcs.VcsConstants.VCS_CLEAN_UPDATE;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_LOCAL_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REMOTE_REPO_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REVISION_KEY;
-import static org.apache.commons.lang.BooleanUtils.toBoolean;
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.BooleanUtils.toBoolean;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import java.io.File;
 import java.io.IOException;

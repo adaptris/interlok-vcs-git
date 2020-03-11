@@ -2,9 +2,9 @@ package com.adaptris.vcs.git.auth;
 
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_PROXY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_PROXY_USERNAME;
-import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 import java.util.Properties;
 
