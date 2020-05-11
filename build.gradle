@@ -6,7 +6,7 @@ plugins {
   id 'jacoco'
   // Manage optional dependencies in maven pom.
   id 'nebula.optional-base' version '5.0.3'
-  id 'com.github.spotbugs' version '3.0.0'
+  id 'com.github.spotbugs' version '4.0.5'
 }
 ext {
   interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '3.10-SNAPSHOT'
@@ -25,7 +25,7 @@ ext {
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.30'
-  log4j2Version = '2.13.0'
+  log4j2Version = '2.13.2'
 }
 
 ext.hasGraphViz = { ->
@@ -91,6 +91,11 @@ configurations {
   all*.exclude group: 'net.sf.saxon', module: 'saxon'
   all*.exclude group: 'org.codehaus.woodstox'
   all*.exclude group: 'org.eclipse.jetty.orbit', module: 'javax.mail.glassfish'
+  // INTERLOK-3197 exclude old javax.mail
+  all*.exclude group: 'com.sun.mail', module: 'javax.mail'
+  all*.exclude group: 'javax.validation', module: 'validation-api'
+  all*.exclude group: 'javax.activation', module: 'activation'
+  all*.exclude group: 'javax.activation', module: 'javax.activation-api'
 }
 
 configurations.all {
@@ -101,9 +106,9 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
   compile ("commons-lang:commons-lang:2.6")
-  compile ("org.apache.httpcomponents:httpclient:4.5.11")
+  compile ("org.apache.httpcomponents:httpclient:4.5.12")
   compile ("com.jcraft:jsch:0.1.55")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
@@ -276,25 +281,28 @@ publishing {
 }
 
 
-spotbugs {
+spotbugsMain {
+  effort = "max"
+  reportLevel = "high"
   // showProgress = "true"
   effort = "max"
   // Ignore failures?
   // ignoreFailures = false
-
-  // We only care about "high priority" issues...
-  reportLevel = "high"
+  reports {
+    xml {
+      enabled = false
+    }
+    html {
+      enabled = true
+    }
+  }
+  // includeFilter = new File("$rootDir/gradle/spotbugs-filter.xml")
+  // excludeFilter = new File("$rootDir/gradle/spotbugs-exclude.xml")
 }
 
 // disable spotbugsTests which checks our test code..
 spotbugsTest.enabled = false
 
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
-  reports {
-    xml.enabled = false
-    html.enabled = true
-  }
-}
 
 javadoc.dependsOn offlinePackageList,umlJavadoc
 check.dependsOn jacocoTestReport
