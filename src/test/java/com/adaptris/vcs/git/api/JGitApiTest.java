@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotSame;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.io.FileUtils;
@@ -134,7 +135,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
 
-      String newRev = addFile(git, testName.getMethodName(), generateContent());
+      addFile(git, testName.getMethodName(), generateContent());
 
       // Do an update to move us past the initial revision.
       api.update(checkoutDir);
@@ -159,7 +160,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
       File newFile = createAndDeleteTempFile(checkoutDir);
-      FileUtils.write(newFile, generateContent());
+      FileUtils.write(newFile, generateContent(), StandardCharsets.UTF_8);
       api.addAndCommit(checkoutDir, testName.getMethodName(), newFile.getName());
       String apiRev = api.getLocalRevision(checkoutDir);
       assertNotSame(initialRev, apiRev);
@@ -184,7 +185,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
       File changeFile = new File(checkoutDir, README_TXT);
-      FileUtils.write(changeFile, generateContent());
+      FileUtils.write(changeFile, generateContent(), StandardCharsets.UTF_8);
       api.commit(checkoutDir, testName.getMethodName());
       String apiRev = api.getLocalRevision(checkoutDir);
       assertNotSame(initialRev, apiRev);
@@ -208,7 +209,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
       File newFile = createAndDeleteTempFile(checkoutDir);
-      FileUtils.write(newFile, generateContent());
+      FileUtils.write(newFile, generateContent(), StandardCharsets.UTF_8);
 
       api.recursiveAdd(checkoutDir);
       api.commit(checkoutDir, testName.getMethodName());
@@ -220,15 +221,6 @@ public class JGitApiTest {
       deleteQuietly(checkoutDir);
       deleteQuietly(baseGitRepo);
     }
-  }
-
-
-  private long count(Iterable objs) {
-    long result = 0;
-    for (Object o : objs) {
-      result++;
-    }
-    return result;
   }
 
   private String initialiseRepo(File gitRepo) throws Exception {
@@ -248,7 +240,7 @@ public class JGitApiTest {
   }
 
   private String addFile(Git repo, File file, String commitMsg, String contents) throws Exception {
-    FileUtils.write(file, contents);
+    FileUtils.write(file, contents, StandardCharsets.UTF_8);
     repo.add().addFilepattern(file.getName()).call();
     RevCommit commit = repo.commit().setAll(true).setMessage(commitMsg).call();
     return commit.getName();
@@ -257,7 +249,7 @@ public class JGitApiTest {
   private static void close(Git repo) {
     if (repo != null)
       repo.close();
-  }
+    }
 
   private Git openRepo(File localRepoDir) throws Exception {
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
