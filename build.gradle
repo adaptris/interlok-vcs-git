@@ -26,6 +26,7 @@ ext {
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.30'
+  jgitVersion = '5.8.1.202007141445-r'
 }
 
 ext.hasGraphViz = { ->
@@ -106,7 +107,8 @@ dependencies {
   compile ("com.adaptris:interlok-core:$interlokCoreVersion") { changing= true}
   compile ("com.adaptris:interlok-common:$interlokCoreVersion") { changing= true}
   compile ("org.slf4j:slf4j-api:$slf4jVersion")
-  compile ("org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r")
+  compile ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion")
+  compile ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:$jgitVersion")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.12")
   compile ("commons-codec:commons-codec:1.14")

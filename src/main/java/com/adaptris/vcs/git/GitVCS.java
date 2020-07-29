@@ -27,41 +27,41 @@ import com.adaptris.vcs.git.auth.AuthenticationProviderFactory;
  * <p>
  * {@link RuntimeVersionControl} implementation specifically built for GIT.
  * </p>
- * 
+ *
  * <p>
  * This implementation will allow allow cloning and updating of a local repository. Interlok by
  * itself does not manage repository files, but simply checks them out so that we can start an
  * instance with configuration files that may be checked in.
  * </p>
- * 
+ *
  * <p>
  * By dropping this jar file into the classpath of Interlok you will have activated source control
  * cloning via GIT.<br/>
  * However if you do not configure the bootstrap.properties correctly we will skip attempting to
  * clone/update your local repository.
  * </p>
- * 
+ *
  * @author amcgrath
  * @since 3.0.3
- * 
+ *
  */
 public class GitVCS implements RuntimeVersionControl {
-  
+
   protected transient Logger log = LoggerFactory.getLogger(this.getClass());
-  
+
   private static final String VCS_NAME = "Git";
   public static final String VCS_PROXY_TYPE = "vcs.ssh.proxy.type";
 
   private static final String HARD_RESET_DEFAULT = "false";
   private BootstrapProperties bootstrapProperties;
-  
+
   private transient VersionControlSystem api;
-  
+
   public GitVCS() {
   }
-  
+
   public GitVCS(BootstrapProperties bootstrapProperties) {
-    this.setBootstrapProperties(bootstrapProperties);
+    setBootstrapProperties(bootstrapProperties);
   }
 
   @Override
@@ -90,7 +90,7 @@ public class GitVCS implements RuntimeVersionControl {
     gitCheckout(config);
     gitUpdate(config);
   }
-  
+
   private void gitCheckout(GitConfig config) throws VcsException {
     if (!config.isConfigured()) {
       log.info("GIT: [{}] or [{}] not configured, skipping checkout.", VCS_LOCAL_URL_KEY, VCS_REMOTE_REPO_URL_KEY);
@@ -99,11 +99,11 @@ public class GitVCS implements RuntimeVersionControl {
     log.info("GIT: Performing checkout to [{}] ", fullpath(config.getLocalRepo()));
     String checkoutRevision = null;
     if (!config.hasRevision()) {
-      checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo());
+      checkoutRevision = api().checkout(config.getRemoteRepo(), config.getLocalRepo());
     } else {
-      checkoutRevision = this.api().checkout(config.getRemoteRepo(), config.getLocalRepo(), config.getRevision());
+      checkoutRevision = api().checkout(config.getRemoteRepo(), config.getLocalRepo(), config.getRevision());
     }
-    // log.info("GIT: Checked out configuration to revision: {}", checkoutRevision);
+    log.trace("GIT: Checked out configuration to revision: {}", checkoutRevision);
   }
 
   private void gitUpdate(GitConfig config) throws VcsException {
@@ -113,9 +113,9 @@ public class GitVCS implements RuntimeVersionControl {
     }
     String checkoutRevision = null;
     if (isEmpty(config.getRevision())) {
-      checkoutRevision = this.api().update(config.getLocalRepo());
+      checkoutRevision = api().update(config.getLocalRepo());
     } else {
-      checkoutRevision = this.api().update(config.getLocalRepo(), config.getRevision());
+      checkoutRevision = api().update(config.getLocalRepo(), config.getRevision());
     }
     log.info("GIT: Updated configuration to revision: {}", checkoutRevision);
   }
@@ -127,18 +127,18 @@ public class GitVCS implements RuntimeVersionControl {
       throw new VcsException(e);
     }
   }
-  
+
   private String fullpath(File file) {
     String result = file.getAbsolutePath();
     try {
       result = file.getCanonicalPath();
     } catch(IOException e) {
-      
+
     }
     return result;
   }
-  
-  
+
+
   @Override
   public JGitApi getApi(Properties properties) throws VcsException {
     AuthenticationProvider authenticationProvider = new AuthenticationProviderFactory().createAuthenticationProvider(properties);
@@ -151,18 +151,18 @@ public class GitVCS implements RuntimeVersionControl {
   public void setBootstrapProperties(BootstrapProperties bootstrapProperties) {
     this.bootstrapProperties = bootstrapProperties;
   }
-  
+
   public BootstrapProperties getBootstrapProperties() {
-    return this.bootstrapProperties;
+    return bootstrapProperties;
   }
 
   protected VersionControlSystem api() throws VcsException {
     if (this.getApi() == null) {
-      this.setApi(this.getApi(getBootstrapProperties()));
+      setApi(this.getApi(getBootstrapProperties()));
     }
     return this.getApi();
   }
-  
+
   VersionControlSystem getApi() {
     return api;
   }
