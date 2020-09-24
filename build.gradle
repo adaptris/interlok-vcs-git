@@ -111,7 +111,7 @@ dependencies {
   compile ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:$jgitVersion")
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.12")
-  compile ("commons-codec:commons-codec:1.14")
+  compile ("commons-codec:commons-codec:1.15")
   compile ("com.jcraft:jsch:0.1.55")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
