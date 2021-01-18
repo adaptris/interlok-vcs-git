@@ -273,7 +273,7 @@ publishing {
         properties.appendNode("target", "3.8.0+")
         properties.appendNode("tags", "git,vcs")
         properties.appendNode("license", "false")
-        properties.appendNode("url", "https://interlok.adaptris.net/interlok-docs/advanced-vcs-git.html")
+        properties.appendNode("url", "https://interlok.adaptris.net/interlok-docs/#/pages/advanced/advanced-vcs-git")
         properties.appendNode("repository", "https://github.com/adaptris/interlok-vcs-git")
         properties.appendNode("readme", "https://github.com/adaptris/interlok-vcs-git/raw/develop/README.md")
       }
