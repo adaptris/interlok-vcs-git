@@ -6,7 +6,7 @@ Checking out interlok configuration from git on startup.
 
 ## Canonical Reference Documentation
 
-[https://interlok.adaptris.net/interlok-docs/advanced-vcs-git.html](https://interlok.adaptris.net/interlok-docs/advanced-vcs-git.html)
+[https://interlok.adaptris.net/interlok-docs/#/pages/advanced/advanced-vcs-git](https://interlok.adaptris.net/interlok-docs/#/pages/advanced/advanced-vcs-git)
 
 ## Quickstart
 
