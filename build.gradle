@@ -101,6 +101,9 @@ configurations {
   all*.exclude group: 'javax.validation', module: 'validation-api'
   all*.exclude group: 'javax.activation', module: 'activation'
   all*.exclude group: 'javax.activation', module: 'javax.activation-api'
+
+  // INTERLOK-3740 switch from jcraft to com.github.mwiede jsch fork.
+  all*.exclude group: 'com.jcraft', module: 'jsch'
 }
 
 configurations.all {
@@ -116,7 +119,7 @@ dependencies {
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.13")
   compile ("commons-codec:commons-codec:1.15")
-  compile ("com.jcraft:jsch:0.1.55")
+  compile ("com.github.mwiede:jsch:0.1.62")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.1.4")
