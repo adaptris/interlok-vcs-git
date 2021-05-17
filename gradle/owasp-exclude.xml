@@ -7,5 +7,12 @@
     ]]></notes>
     <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit@.*$</packageUrl>
     <cve>CVE-2014-9390</cve>
+  </suppress>  <suppress>
+    <notes><![CDATA[
+    ile name: org.eclipse.jgit.ssh.jsch-5.11.1.202105131744-r.jar
+	Seems to be a false positive as the CVE is old and we use a more recent version that the up to version. 
+    ]]></notes>
+    <packageUrl regex="true">^pkg:maven/org\.eclipse\.jgit/org\.eclipse\.jgit\.ssh\.jsch@.*$</packageUrl>
+    <cve>CVE-2014-9390</cve>
   </suppress>
 </suppressions>
