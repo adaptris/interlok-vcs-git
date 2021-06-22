@@ -6,12 +6,12 @@ plugins {
   id 'jacoco'
   // Manage optional dependencies in maven pom.
   id 'nebula.optional-base' version '6.0.0'
-  id 'com.github.spotbugs' version '4.7.0'
-  id 'org.owasp.dependencycheck' version '6.1.2'
+  id 'com.github.spotbugs' version '4.7.1'
+  id 'org.owasp.dependencycheck' version '6.2.0'
 }
 ext {
-  interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '4.0-SNAPSHOT'
-  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '4.0-SNAPSHOT'
+  interlokCoreVersion = project.hasProperty('interlokCoreVersion') ? project.getProperty('interlokCoreVersion') : '4.1-SNAPSHOT'
+  releaseVersion = project.hasProperty('releaseVersion') ? project.getProperty('releaseVersion') : '4.1-SNAPSHOT'
   nexusBaseUrl = project.hasProperty('nexusBaseUrl') ? project.getProperty('nexusBaseUrl') : 'https://nexus.adaptris.net/nexus'
   mavenPublishUrl = project.hasProperty('mavenPublishUrl') ? project.getProperty('mavenPublishUrl') : nexusBaseUrl + '/content/repositories/snapshots'
   javadocsBaseUrl = nexusBaseUrl + "/content/sites/javadocs/com/adaptris"
@@ -27,8 +27,8 @@ ext {
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '1.7.30'
-  mockitoVersion = '3.8.0'
-  jgitVersion = '5.10.0.202012080955-r'
+  mockitoVersion = '3.11.0'
+  jgitVersion = '5.11.1.202105131744-r'
 }
 
 ext.hasGraphViz = { ->
@@ -119,7 +119,7 @@ dependencies {
   compile ("commons-lang:commons-lang:2.6")
   compile ("org.apache.httpcomponents:httpclient:4.5.13")
   compile ("commons-codec:commons-codec:1.15")
-  compile ("com.github.mwiede:jsch:0.1.62")
+  compile ("com.github.mwiede:jsch:0.1.63")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.1.4")
@@ -321,7 +321,7 @@ spotbugsMain {
   // excludeFilter = new File("$rootDir/gradle/spotbugs-exclude.xml")
 }
 dependencyCheck  {
-  suppressionFiles= [ "https://raw.githubusercontent.com/adaptris/interlok/develop/gradle/owasp-exclude.xml" ]
+  suppressionFiles= [ "https://raw.githubusercontent.com/adaptris/interlok/develop/gradle/owasp-exclude.xml" , "$rootDir/gradle/owasp-exclude.xml" ]
   skipConfigurations = [ "antSql", "spotbugs", "umlDoclet", "offlineJavadocPackages", "javadoc", "jacocoAnt", "jacocoAgent", "spotbugsPlugins", "spotbugsSlf4j" ]
   formats = [ "HTML", "JUNIT" ]
   junitFailOnCVSS = 7.0
