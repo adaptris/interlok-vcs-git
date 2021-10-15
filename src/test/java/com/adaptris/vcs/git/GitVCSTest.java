@@ -1,7 +1,7 @@
 package com.adaptris.vcs.git;
 
-import static org.mockito.ArgumenMatchers.any;
-import static org.mockito.ArgumenMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
