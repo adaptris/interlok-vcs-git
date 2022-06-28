@@ -5,12 +5,12 @@ plugins {
   id 'jacoco'
   // Manage optional dependencies in maven pom.
   id 'nebula.optional-base' version '7.0.0'
-  id 'com.github.spotbugs' version '5.0.5'
-  id 'org.owasp.dependencycheck' version '6.5.3'
+  id 'com.github.spotbugs' version '5.0.7'
+  id 'org.owasp.dependencycheck' version '7.1.0.1'
 }
 ext {
-  interlokCoreVersion = project.findProperty('interlokCoreVersion') ?: '4.4-SNAPSHOT'
-  releaseVersion = project.findProperty('releaseVersion') ?: '4.4-SNAPSHOT'
+  interlokCoreVersion = project.findProperty('interlokCoreVersion') ?: '4.5-SNAPSHOT'
+  releaseVersion = project.findProperty('releaseVersion') ?: '4.5-SNAPSHOT'
   nexusBaseUrl = project.findProperty('nexusBaseUrl') ?: 'https://nexus.adaptris.net/nexus'
   mavenPublishUrl = project.findProperty('mavenPublishUrl') ?: nexusBaseUrl + '/content/repositories/snapshots'
   javadocsBaseUrl = nexusBaseUrl + "/content/sites/javadocs/com/adaptris"
@@ -25,8 +25,8 @@ ext {
   componentDesc="Checking config out of GIT on startup"
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '1.7.35'
-  mockitoVersion = '4.3.1'
+  slf4jVersion = '1.7.36'
+  mockitoVersion = '4.5.1'
   jgitVersion = '5.13.0.202109080827-r'
 }
 
@@ -132,7 +132,7 @@ dependencies {
   implementation ("commons-lang:commons-lang:2.6")
   implementation ("org.apache.httpcomponents:httpclient:4.5.13")
   implementation ("commons-codec:commons-codec:1.15")
-  implementation ("com.github.mwiede:jsch:0.1.72")
+  implementation ("com.github.mwiede:jsch:0.2.1")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.1.4")
