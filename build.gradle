@@ -132,7 +132,7 @@ dependencies {
   implementation ("commons-lang:commons-lang:2.6")
   implementation ("org.apache.httpcomponents:httpclient:4.5.13")
   implementation ("commons-codec:commons-codec:1.15")
-  implementation ("com.github.mwiede:jsch:0.2.3")
+  implementation ("com.github.mwiede:jsch:0.2.4")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:1.1.4")
