@@ -25,7 +25,7 @@ ext {
   componentDesc="Checking config out of GIT on startup"
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '2.0.3'
+  slf4jVersion = '2.0.6'
   mockitoVersion = '4.9.0'
   jgitVersion = '5.13.0.202109080827-r'
 }
