@@ -5,12 +5,12 @@ plugins {
   id 'jacoco'
   // Manage optional dependencies in maven pom.
   id 'nebula.optional-base' version '7.0.0'
-  id 'com.github.spotbugs' version '5.0.13'
-  id 'org.owasp.dependencycheck' version '7.4.4'
+  id 'com.github.spotbugs' version '5.0.14'
+  id 'org.owasp.dependencycheck' version '8.2.1'
 }
 ext {
-  interlokCoreVersion = project.findProperty('interlokCoreVersion') ?: '4.7-SNAPSHOT'
-  releaseVersion = project.findProperty('releaseVersion') ?: '4.7-SNAPSHOT'
+  interlokCoreVersion = project.findProperty('interlokCoreVersion') ?: '4.8-SNAPSHOT'
+  releaseVersion = project.findProperty('releaseVersion') ?: '4.8-SNAPSHOT'
   nexusBaseUrl = project.findProperty('nexusBaseUrl') ?: 'https://nexus.adaptris.net/nexus'
   mavenPublishUrl = project.findProperty('mavenPublishUrl') ?: nexusBaseUrl + '/content/repositories/snapshots'
   javadocsBaseUrl = nexusBaseUrl + "/content/sites/javadocs/com/adaptris"
@@ -130,7 +130,7 @@ dependencies {
   implementation ("org.eclipse.jgit:org.eclipse.jgit:$jgitVersion")
   implementation ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:$jgitVersion")
   implementation ("commons-lang:commons-lang:2.6")
-  implementation ("org.apache.httpcomponents:httpclient:4.5.13")
+  implementation ("org.apache.httpcomponents:httpclient:4.5.14")
   implementation ("commons-codec:commons-codec:1.15")
   implementation ("com.github.mwiede:jsch:0.2.4")
 
@@ -333,6 +333,7 @@ dependencyCheck  {
   failBuildOnCVSS = 7.0
   analyzers {
     assemblyEnabled=false
+    knownExploitedURL=project.findProperty('dependencyCheckKnownExploitedURL')
   }
 }
 
