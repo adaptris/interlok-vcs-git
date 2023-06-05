@@ -9,13 +9,15 @@ class NullAuthenticationProvider extends AuthenticationProviderImpl {
   public NullAuthenticationProvider(Properties p) throws Exception {
     super(p);
   }
-  
+
   @Override
   public CredentialsProvider getCredentialsProvider() {
     return null;
   }
 
+  @Override
   public String toString() {
     return "Auth:NONE";
   }
+
 }
