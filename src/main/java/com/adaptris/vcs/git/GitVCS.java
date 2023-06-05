@@ -29,16 +29,13 @@ import com.adaptris.vcs.git.auth.AuthenticationProviderFactory;
  * </p>
  *
  * <p>
- * This implementation will allow allow cloning and updating of a local repository. Interlok by
- * itself does not manage repository files, but simply checks them out so that we can start an
- * instance with configuration files that may be checked in.
+ * This implementation will allow allow cloning and updating of a local repository. Interlok by itself does not manage repository files, but
+ * simply checks them out so that we can start an instance with configuration files that may be checked in.
  * </p>
  *
  * <p>
- * By dropping this jar file into the classpath of Interlok you will have activated source control
- * cloning via GIT.<br/>
- * However if you do not configure the bootstrap.properties correctly we will skip attempting to
- * clone/update your local repository.
+ * By dropping this jar file into the classpath of Interlok you will have activated source control cloning via GIT.<br/>
+ * However if you do not configure the bootstrap.properties correctly we will skip attempting to clone/update your local repository.
  * </p>
  *
  * @author amcgrath
@@ -132,18 +129,17 @@ public class GitVCS implements RuntimeVersionControl {
     String result = file.getAbsolutePath();
     try {
       result = file.getCanonicalPath();
-    } catch(IOException e) {
+    } catch (IOException e) {
 
     }
     return result;
   }
 
-
   @Override
   public JGitApi getApi(Properties properties) throws VcsException {
     AuthenticationProvider authenticationProvider = new AuthenticationProviderFactory().createAuthenticationProvider(properties);
     boolean force = toBoolean(properties.getProperty(VCS_CLEAN_UPDATE, HARD_RESET_DEFAULT));
-    JGitApi api =  new JGitApi(authenticationProvider, force);
+    JGitApi api = new JGitApi(authenticationProvider, force);
     return api;
   }
 
@@ -202,4 +198,5 @@ public class GitVCS implements RuntimeVersionControl {
       return revision;
     }
   }
+
 }

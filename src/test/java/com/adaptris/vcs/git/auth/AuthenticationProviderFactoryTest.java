@@ -5,11 +5,11 @@ import static com.adaptris.core.management.vcs.VcsConstants.VCS_PASSWORD_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_REMOTE_REPO_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_SSH_KEYFILE_URL_KEY;
 import static com.adaptris.core.management.vcs.VcsConstants.VCS_USERNAME_KEY;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Properties;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.adaptris.core.management.vcs.VcsException;
 

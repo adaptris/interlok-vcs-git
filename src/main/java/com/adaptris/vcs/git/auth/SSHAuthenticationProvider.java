@@ -16,16 +16,15 @@ import com.jcraft.jsch.JSchException;
 class SSHAuthenticationProvider extends AuthenticationProviderImpl {
 
   private String passPhrase;
-  
+
   private File privateKeyFile;
 
   public SSHAuthenticationProvider(Properties p) throws Exception {
     super(p);
     setPassPhrase(getPasswordProperty(p, VCS_SSH_PASSPHRASE_KEY));
-    setPrivateKeyFile(FsHelper
-        .createFileReference(FsHelper.createUrlFromString(p.getProperty(VCS_SSH_KEYFILE_URL_KEY), true)));
+    setPrivateKeyFile(FsHelper.createFileReference(FsHelper.createUrlFromString(p.getProperty(VCS_SSH_KEYFILE_URL_KEY), true)));
   }
-  
+
   @Override
   public CredentialsProvider getCredentialsProvider() {
     return null;
@@ -39,11 +38,9 @@ class SSHAuthenticationProvider extends AuthenticationProviderImpl {
         JSch defaultJSch = super.createDefaultJSch(fs);
         try {
           defaultJSch.addIdentity(getPrivateKeyFile().getAbsolutePath(), getPassPhrase());
-        }
-        catch (JSchException e) {
+        } catch (JSchException e) {
           throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           throw new JSchException(e.getMessage(), e);
         }
         return defaultJSch;
@@ -67,7 +64,9 @@ class SSHAuthenticationProvider extends AuthenticationProviderImpl {
     this.privateKeyFile = privateKeyFile;
   }
 
+  @Override
   public String toString() {
     return "Auth:SSH+KEY";
   }
+
 }

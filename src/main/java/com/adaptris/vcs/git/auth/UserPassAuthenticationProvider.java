@@ -11,16 +11,15 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 class UserPassAuthenticationProvider extends AuthenticationProviderImpl {
 
   private String user;
-  
+
   private String password;
-  
+
   public UserPassAuthenticationProvider(Properties p) throws Exception {
     super(p);
     setUser(p.getProperty(VCS_USERNAME_KEY));
     setPassword(getPasswordProperty(p, VCS_PASSWORD_KEY));
   }
-  
-  
+
   @Override
   public CredentialsProvider getCredentialsProvider() {
     return new UsernamePasswordCredentialsProvider(getUser(), getPassword());
@@ -42,6 +41,7 @@ class UserPassAuthenticationProvider extends AuthenticationProviderImpl {
     this.password = password;
   }
 
+  @Override
   public String toString() {
     return "Auth:Username+Password";
   }

@@ -224,7 +224,6 @@ public class JGitApi implements VersionControlSystem {
     return result;
   }
 
-
   private void createBranchIfMissing(Git localRepository, String branchName) throws IOException, GitAPIException {
     String localRef = String.format(LOCAL_HEAD_BRANCH, branchName);
     String remoteRef = String.format(REMOTE_ORIGIN_BRANCH, branchName);
@@ -246,7 +245,6 @@ public class JGitApi implements VersionControlSystem {
     configureAuthentication(cloneCommand);
     return cloneCommand.call();
   }
-
 
   private FetchCommand gitFetch(Git localRepository) throws GitAPIException {
     FetchCommand fetcher = localRepository.fetch();
@@ -282,7 +280,6 @@ public class JGitApi implements VersionControlSystem {
     return cmd;
   }
 
-
   private void resetRepository(Git repo, String branchOrTag) throws IOException, CheckoutConflictException, GitAPIException {
     if (hardReset) {
       ResetCommand cmd = repo.reset();
@@ -292,8 +289,6 @@ public class JGitApi implements VersionControlSystem {
       cmd.call();
     }
   }
-
-
 
   private void push(Git localRepository, RevCommit revCommit) throws GitAPIException, CheckoutConflictException, VcsException {
     try {
@@ -366,7 +361,6 @@ public class JGitApi implements VersionControlSystem {
     return gitRepo.log().addRange(currentBranchRef.getObjectId(), remoteBranchRef.getObjectId());
   }
 
-
   private String getRemoteRevision(Git gitRepo) throws GitAPIException, IOException {
     String result = currentLocalRevision(gitRepo);
     Iterable<RevCommit> commits = gitLogRemoteChanges(gitRepo).setMaxCount(1).call();
@@ -376,10 +370,8 @@ public class JGitApi implements VersionControlSystem {
     return result;
   }
 
-
   @Override
-  public List<RevisionHistoryItem> getRemoteRevisionHistory(String remoteRepoUrl, File workingCopyUrl, int limit)
-      throws VcsException {
+  public List<RevisionHistoryItem> getRemoteRevisionHistory(String remoteRepoUrl, File workingCopyUrl, int limit) throws VcsException {
     List<RevisionHistoryItem> result = new ArrayList<>();
     Git gitRepo = getLocalRepository(workingCopyUrl);
     try {

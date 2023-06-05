@@ -1,7 +1,7 @@
 package com.adaptris.vcs.git.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,27 +16,20 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 public class JGitApiTest {
 
   private static final String README_TXT = "README.TXT";
 
-  @Rule
-  public TestName testName = new TestName();
+  public TestInfo testInfo;
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeEach
+  public void setUp(TestInfo info) throws Exception {
+    testInfo = info;
   }
-
-  @After
-  public void tearDown() throws Exception {
-  }
-
 
   private File createAndDeleteTempFile(File dir) throws IOException {
     File result = null;
@@ -68,7 +61,6 @@ public class JGitApiTest {
       deleteQuietly(baseGitRepo);
     }
   }
-
 
   @Test
   public void testCheckout() throws Exception {
@@ -112,7 +104,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
 
-      String updateRev = addFile(git, testName.getMethodName(), generateContent());
+      String updateRev = addFile(git, testInfo.getDisplayName(), generateContent());
 
       String apiRev = api.update(checkoutDir);
       assertEquals(updateRev, apiRev);
@@ -135,7 +127,7 @@ public class JGitApiTest {
       String checkoutRev = api.checkout(baseGitRepo.getAbsolutePath(), checkoutDir);
       assertEquals(initialRev, checkoutRev);
 
-      addFile(git, testName.getMethodName(), generateContent());
+      addFile(git, testInfo.getDisplayName(), generateContent());
 
       // Do an update to move us past the initial revision.
       api.update(checkoutDir);
@@ -161,7 +153,7 @@ public class JGitApiTest {
       assertEquals(initialRev, checkoutRev);
       File newFile = createAndDeleteTempFile(checkoutDir);
       FileUtils.write(newFile, generateContent(), StandardCharsets.UTF_8);
-      api.addAndCommit(checkoutDir, testName.getMethodName(), newFile.getName());
+      api.addAndCommit(checkoutDir, testInfo.getDisplayName(), newFile.getName());
       String apiRev = api.getLocalRevision(checkoutDir);
       assertNotSame(initialRev, apiRev);
       assertEquals(currentRevision(git), apiRev);
@@ -171,7 +163,6 @@ public class JGitApiTest {
       deleteQuietly(baseGitRepo);
     }
   }
-
 
   @Test
   public void testCommit() throws Exception {
@@ -186,7 +177,7 @@ public class JGitApiTest {
       assertEquals(initialRev, checkoutRev);
       File changeFile = new File(checkoutDir, README_TXT);
       FileUtils.write(changeFile, generateContent(), StandardCharsets.UTF_8);
-      api.commit(checkoutDir, testName.getMethodName());
+      api.commit(checkoutDir, testInfo.getDisplayName());
       String apiRev = api.getLocalRevision(checkoutDir);
       assertNotSame(initialRev, apiRev);
       assertEquals(currentRevision(git), apiRev);
@@ -212,7 +203,7 @@ public class JGitApiTest {
       FileUtils.write(newFile, generateContent(), StandardCharsets.UTF_8);
 
       api.recursiveAdd(checkoutDir);
-      api.commit(checkoutDir, testName.getMethodName());
+      api.commit(checkoutDir, testInfo.getDisplayName());
       String apiRev = api.getLocalRevision(checkoutDir);
       assertNotSame(initialRev, apiRev);
       assertEquals(currentRevision(git), apiRev);
@@ -247,9 +238,10 @@ public class JGitApiTest {
   }
 
   private static void close(Git repo) {
-    if (repo != null)
+    if (repo != null) {
       repo.close();
     }
+  }
 
   private Git openRepo(File localRepoDir) throws Exception {
     FileRepositoryBuilder builder = new FileRepositoryBuilder();
@@ -270,4 +262,5 @@ public class JGitApiTest {
     ObjectId resolvedRevision = repository.getRepository().resolve(fullBranch);
     return resolvedRevision.getName();
   }
+
 }
