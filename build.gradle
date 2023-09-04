@@ -27,7 +27,7 @@ ext {
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '2.0.7'
   mockitoVersion = '5.2.0'
-  jgitVersion = '5.13.0.202109080827-r'
+  jgitVersion = '6.6.1.202309021850-r'
 }
 
 ext.hasGraphViz = { ->
