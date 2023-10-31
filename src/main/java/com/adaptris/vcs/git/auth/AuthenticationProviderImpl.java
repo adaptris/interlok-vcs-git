@@ -9,8 +9,8 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import java.util.Properties;
 
 import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
+import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
