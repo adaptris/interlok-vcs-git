@@ -44,11 +44,6 @@ ext.hasGraphViz = { ->
   }
 }
 
-task getDeps(type: Copy) {
-  from sourceSets.main.runtimeClasspath
-  into 'runtime/'
-}
-
 ext.gitBranchNameOrTimestamp = { branchName ->
   if (branchName.equals("HEAD") || branchName.equals("develop") || branchName.startsWith("release")) {
     return new Date().format('HH:mm:ss z');
