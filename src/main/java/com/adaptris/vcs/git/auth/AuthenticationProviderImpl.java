@@ -9,10 +9,9 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import java.util.Properties;
 
 import org.eclipse.jgit.api.TransportConfigCallback;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
+import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
+import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig.Host;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,18 +85,13 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
 
   @Override
   public TransportConfigCallback getTransportInterceptor() {
-    return new TransportConfigCallback() {
-      @Override
-      public void configure(Transport transport) {
-        if (transport instanceof SshTransport) {
-          SshTransport sshTransport = (SshTransport) transport;
-          sshTransport.setSshSessionFactory(createSessionFactory());
-        }
+    return transport -> {
+      if (transport instanceof SshTransport) {
+        SshTransport sshTransport = (SshTransport) transport;
+        sshTransport.setSshSessionFactory(createSessionFactory());
       }
     };
   }
-
-
 
   ProxySupport createSessionFactory() {
     return new ProxySupport();
@@ -177,4 +171,5 @@ abstract class AuthenticationProviderImpl implements AuthenticationProvider {
     abstract Proxy addUserCredentials(Proxy proxy, String user, String password);
 
   }
+
 }

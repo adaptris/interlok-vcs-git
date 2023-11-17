@@ -84,12 +84,13 @@ public class AuthenticationProviderFactory {
         String remoteRepo = p.getProperty(VCS_REMOTE_REPO_URL_KEY, "");
         return remoteRepo.startsWith("ssh://") && containsAllKeys(p, VCS_SSH_KEYFILE_URL_KEY);
       }
-      
+
     };
+
     private Auth auth;
 
     ProtocolAuthMapper(Auth a) {
-      this.auth = a;
+      auth = a;
     }
 
     Auth auth() {
@@ -106,13 +107,11 @@ public class AuthenticationProviderFactory {
       if (!isEmpty(authImpl)) {
         log.trace("Explicit authentication implementation requested : {}", authImpl);
         result = Auth.valueOf(authImpl).create(bootstrapProperties);
-      }
-      else {
+      } else {
         log.trace("Attempting to derive authentication implementation");
         result = derive(bootstrapProperties);
       }
-    }
-    catch (Exception ex) {
+    } catch (Exception ex) {
       throw new VcsException("Authentication provider may be misconfigured;", ex);
     }
     log.trace("Authentication implementation : {}", result);
@@ -137,4 +136,5 @@ public class AuthenticationProviderFactory {
     }
     return rc == keys.length;
   }
+
 }
