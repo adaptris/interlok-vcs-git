@@ -6,9 +6,9 @@ plugins {
   id "jacoco"
   // Manage optional dependencies in maven pom.
   id "nebula.optional-base" version "7.0.0"
-  id "com.github.spotbugs" version "5.2.1"
+  id "com.github.spotbugs" version "6.0.6"
   id "org.sonarqube" version "4.4.1.3373"
-  id "org.owasp.dependencycheck" version "8.4.2"
+  id "org.owasp.dependencycheck" version "9.0.8"
 }
 
 ext {
@@ -28,9 +28,9 @@ ext {
   componentDesc="Checking config out of GIT on startup"
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '2.0.9'
+  slf4jVersion = '2.0.11'
   mockitoVersion = '5.2.0'
-  jgitVersion = '6.7.0.202309050840-r'
+  jgitVersion = '6.8.0.202311291450-r'
 }
 
 // If graphviz is installed via scoop, plantuml doesn't find it because it's not
@@ -144,7 +144,7 @@ dependencies {
   implementation ("commons-lang:commons-lang:2.6")
   implementation ("org.apache.httpcomponents:httpclient:4.5.14")
   implementation ("commons-codec:commons-codec:1.16.0")
-  implementation ("com.github.mwiede:jsch:0.2.12")
+  implementation ("com.github.mwiede:jsch:0.2.16")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:2.1.0")
@@ -309,8 +309,8 @@ publishing {
 }
 
 spotbugsMain {
-  effort = "max"
-  reportLevel = "high"
+  effort = com.github.spotbugs.snom.Effort.valueOf("MAX")
+  reportLevel = com.github.spotbugs.snom.Confidence.valueOf("HIGH")
   reports {
     xml {
       required.set(false)
