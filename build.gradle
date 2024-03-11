@@ -30,7 +30,7 @@ ext {
   organizationUrl = "http://interlok.adaptris.net"
   slf4jVersion = '2.0.12'
   mockitoVersion = '5.2.0'
-  jgitVersion = '6.8.0.202311291450-r'
+  jgitVersion = '6.9.0.202403050737-r'
 }
 
 // If graphviz is installed via scoop, plantuml doesn't find it because it's not
