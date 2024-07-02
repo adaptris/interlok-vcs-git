@@ -6,9 +6,9 @@ plugins {
   id "jacoco"
   // Manage optional dependencies in maven pom.
   id "nebula.optional-base" version "7.0.0"
-  id "com.github.spotbugs" version "6.0.6"
+  id "com.github.spotbugs" version "6.0.14"
   id "org.sonarqube" version "4.4.1.3373"
-  id "org.owasp.dependencycheck" version "9.0.8"
+  id "org.owasp.dependencycheck" version "9.0.10"
 }
 
 ext {
@@ -28,9 +28,9 @@ ext {
   componentDesc="Checking config out of GIT on startup"
   organizationName = "Adaptris Ltd"
   organizationUrl = "http://interlok.adaptris.net"
-  slf4jVersion = '2.0.11'
+  slf4jVersion = '2.0.13'
   mockitoVersion = '5.2.0'
-  jgitVersion = '6.8.0.202311291450-r'
+  jgitVersion = '6.9.0.202403050737-r'
 }
 
 // If graphviz is installed via scoop, plantuml doesn't find it because it's not
@@ -143,13 +143,13 @@ dependencies {
   implementation ("org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:$jgitVersion")
   implementation ("commons-lang:commons-lang:2.6")
   implementation ("org.apache.httpcomponents:httpclient:4.5.14")
-  implementation ("commons-codec:commons-codec:1.16.0")
-  implementation ("com.github.mwiede:jsch:0.2.16")
+  implementation ("commons-codec:commons-codec:1.17.0")
+  implementation ("com.github.mwiede:jsch:0.2.17")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:2.1.0")
 
-  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.10.2")
   testImplementation ("org.slf4j:slf4j-simple:$slf4jVersion")
   testImplementation ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true }
   testImplementation ("org.mockito:mockito-core:$mockitoVersion")
