@@ -6,9 +6,9 @@ plugins {
   id "jacoco"
   // Manage optional dependencies in maven pom.
   id "nebula.optional-base" version "7.0.0"
-  id "com.github.spotbugs" version "6.0.21"
-  id "org.sonarqube" version "4.4.1.3373"
-  id "org.owasp.dependencycheck" version "10.0.3"
+  id "com.github.spotbugs" version "6.0.27"
+  id "org.sonarqube" version "6.0.1.5171"
+  id "org.owasp.dependencycheck" version "11.1.1"
 }
 
 ext {
@@ -144,12 +144,12 @@ dependencies {
   implementation ("commons-lang:commons-lang:2.6")
   implementation ("org.apache.httpcomponents:httpclient:4.5.14")
   implementation ("commons-codec:commons-codec:1.17.1")
-  implementation ("com.github.mwiede:jsch:0.2.19")
+  implementation ("com.github.mwiede:jsch:0.2.21")
 
   annotationProcessor ("com.adaptris:interlok-core-apt:$interlokCoreVersion") {changing= true}
   umlDoclet("nl.talsmasoftware:umldoclet:2.1.0")
 
-  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.11.0")
+  testImplementation ("org.junit.jupiter:junit-jupiter-engine:5.11.4")
   testImplementation ("org.slf4j:slf4j-simple:$slf4jVersion")
   testImplementation ("com.adaptris:interlok-stubs:$interlokCoreVersion") { changing= true }
   testImplementation ("org.mockito:mockito-core:$mockitoVersion")
